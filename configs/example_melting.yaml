@@ -1,0 +1,19 @@
+# Example configuration for melting effect
+effect:
+  type: bias
+  max_stretch: 0.6
+  stretch_bias: 0.85  # Strong downward bias for melting
+  seed: 42
+
+animation:
+  frames: 90
+  fps: 30
+  interpolation: nearest
+  temporal_smoothing: 0.3
+  upscale: 3
+  cumulative: true  # Cumulative for progressive melting
+  frame_generator: cumulative
+
+output:
+  format: mp4
+  codec: libx264

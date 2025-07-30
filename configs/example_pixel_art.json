@@ -1,0 +1,21 @@
+{
+  "effect": {
+    "type": "pivot",
+    "max_stretch": 0.35,
+    "pivot": "center",
+    "seed": 12345
+  },
+  "animation": {
+    "frames": 45,
+    "fps": 24,
+    "interpolation": "nearest",
+    "temporal_smoothing": 0.2,
+    "upscale": 4,
+    "cumulative": false,
+    "frame_generator": "standard"
+  },
+  "output": {
+    "format": "mp4",
+    "codec": "libx264"
+  }
+}

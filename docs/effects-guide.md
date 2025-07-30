@@ -1,0 +1,292 @@
+# Effects Guide
+
+This guide provides detailed information about each distortion effect, including visual examples, parameter tuning tips, and creative applications.
+
+## Table of Contents
+
+1. [Pivot Effect](#pivot-effect)
+2. [Wave Effect](#wave-effect)
+3. [Bias Effect](#bias-effect)
+4. [Composite Effects](#composite-effects)
+5. [Effect Combinations](#effect-combinations)
+
+## Pivot Effect
+
+The original and most versatile effect. Stretches pixels around a fixed pivot point.
+
+### How It Works
+
+The pivot effect treats each column of pixels independently, stretching them away from or toward a pivot point. The stretch amount is randomized per column, creating an organic distortion pattern.
+
+### Parameters
+
+- **max_stretch** (0-1): Controls the maximum displacement of pixels
+  - 0.1-0.3: Subtle wobble
+  - 0.4-0.6: Moderate distortion
+  - 0.7-1.0: Extreme warping
+
+- **pivot** (center/top/bottom): The anchor point
+  - `center`: Stretches outward from middle (symmetric)
+  - `top`: Stretches downward (hanging effect)
+  - `bottom`: Stretches upward (rising effect)
+
+### Visual Characteristics
+
+- Random, noise-like pattern
+- Each column moves independently
+- Maintains recognizable shapes at low values
+- Creates abstract patterns at high values
+
+### Best Practices
+
+```bash
+# Subtle breathing effect
+pixel-stretch animate input.png output.mp4 \
+  --effect pivot \
+  --pivot center \
+  --max-stretch 0.3 \
+  --temporal-smoothing 0.8
+
+# Hanging/dripping effect
+pixel-stretch animate input.png output.mp4 \
+  --effect pivot \
+  --pivot top \
+  --max-stretch 0.5
+
+# Rising smoke effect
+pixel-stretch animate input.png output.mp4 \
+  --effect pivot \
+  --pivot bottom \
+  --max-stretch 0.4 \
+  --cumulative
+```
+
+### Creative Applications
+
+1. **Pixel Art Enhancement**: Low stretch values (0.2-0.3) add life to static sprites
+2. **Glitch Effects**: High values with no smoothing create digital artifacts
+3. **Transition Effects**: Ramp up stretch over time for scene transitions
+4. **Background Animation**: Subtle movement for menu backgrounds
+
+## Wave Effect
+
+Creates flowing, sinusoidal distortions that ripple through the image.
+
+### How It Works
+
+The wave effect applies a sine wave pattern to the vertical displacement of pixels. The wave can be animated to create flowing motion, and multiple parameters control the wave's shape and behavior.
+
+### Parameters
+
+- **max_stretch** (0-1): Overall intensity multiplier
+- **wave_amplitude** (0-1): Height of wave peaks
+  - 0.05-0.1: Gentle ripples
+  - 0.15-0.3: Moderate waves
+  - 0.4+: Dramatic undulation
+
+- **wave_frequency** (float): Number of complete waves
+  - 1-2: Long, smooth waves
+  - 3-5: Medium frequency
+  - 6+: Rapid oscillation
+
+- **wave_phase_speed** (float): Animation speed
+  - 0.5-1: Slow, hypnotic
+  - 2-3: Normal flow
+  - 4+: Rapid movement
+
+### Visual Characteristics
+
+- Smooth, predictable patterns
+- Horizontal coherence (rows move together)
+- Natural, organic motion
+- Works well with both pixel art and photos
+
+### Best Practices
+
+```bash
+# Gentle water ripple
+pixel-stretch animate water.png ripple.mp4 \
+  --effect wave \
+  --wave-amplitude 0.08 \
+  --wave-frequency 3 \
+  --temporal-smoothing 0.6
+
+# Flag waving effect
+pixel-stretch animate flag.png waving.mp4 \
+  --effect wave \
+  --wave-amplitude 0.15 \
+  --wave-frequency 2 \
+  --max-stretch 0.4
+
+# Psychedelic waves
+pixel-stretch animate abstract.png trippy.mp4 \
+  --effect wave \
+  --wave-amplitude 0.3 \
+  --wave-frequency 5 \
+  --fps 60
+```
+
+### Creative Applications
+
+1. **Water Simulation**: Low amplitude, high frequency for realistic water
+2. **Cloth/Flag Animation**: Medium settings for fabric movement
+3. **Dream Sequences**: High amplitude with slow speed
+4. **UI Effects**: Subtle waves for menu items or backgrounds
+
+## Bias Effect
+
+Directional stretching that creates melting, dripping, or floating effects.
+
+### How It Works
+
+The bias effect applies preferential stretching in one direction. Unlike random stretching, most pixels move in the same direction with occasional counter-movement for organic feel.
+
+### Parameters
+
+- **max_stretch** (0-1): Maximum displacement amount
+- **stretch_bias** (-1 to 1): Direction and strength
+  - -1.0: Strong upward bias (anti-gravity)
+  - -0.5: Moderate upward tendency
+  - 0.0: No bias (random)
+  - 0.5: Moderate downward tendency
+  - 1.0: Strong downward bias (melting)
+
+### Visual Characteristics
+
+- Directional flow
+- Cohesive movement pattern
+- Natural gravity-like effects
+- Excellent for transformation animations
+
+### Best Practices
+
+```bash
+# Melting effect
+pixel-stretch animate ice.png melting.mp4 \
+  --effect bias \
+  --stretch-bias 0.8 \
+  --max-stretch 0.6 \
+  --cumulative \
+  --frames 90
+
+# Anti-gravity float
+pixel-stretch animate character.png floating.mp4 \
+  --effect bias \
+  --stretch-bias -0.7 \
+  --max-stretch 0.4
+
+# Subtle downward drift
+pixel-stretch animate leaves.png falling.mp4 \
+  --effect bias \
+  --stretch-bias 0.5 \
+  --max-stretch 0.3 \
+  --temporal-smoothing 0.7
+```
+
+### Creative Applications
+
+1. **Melting Objects**: Ice, candles, or any melting transformation
+2. **Gravity Effects**: Falling particles, rain, or snow
+3. **Magical Effects**: Floating objects, levitation
+4. **Disintegration**: Objects breaking apart and falling
+
+## Composite Effects
+
+Combine multiple effects for complex animations.
+
+### Implementation
+
+Currently requires Python API:
+
+```python
+from src.distortion_effects import CompositeEffect, WaveDistortionEffect, BiasedStretchEffect
+
+# Create individual effects
+wave = WaveDistortionEffect(
+    max_stretch=0.3,
+    wave_amplitude=0.1,
+    wave_frequency=2
+)
+
+melt = BiasedStretchEffect(
+    max_stretch=0.4,
+    stretch_bias=0.7
+)
+
+# Combine with weights
+composite = CompositeEffect(
+    effects=[wave, melt],
+    weights=[0.6, 0.4]  # 60% wave, 40% melt
+)
+```
+
+### Use Cases
+
+1. **Ocean Waves + Gravity**: Realistic water motion
+2. **Wave + Random**: Organic, less predictable patterns
+3. **Multiple Waves**: Complex interference patterns
+4. **Bias + Pivot**: Directional flow with random elements
+
+## Effect Combinations
+
+### Sequential Effects
+
+Create animations that transition between effects:
+
+```python
+# Start with gentle wave, transition to melting
+sequence = AnimationSequence()
+sequence.add_segment(wave_effect, frames=30, transition_frames=10)
+sequence.add_segment(melt_effect, frames=30)
+```
+
+### Layered Processing
+
+Apply effects in stages:
+
+1. First pass: Subtle wave for base movement
+2. Second pass: Add directional bias
+3. Third pass: Fine random distortion
+
+### Parameter Animation
+
+Vary parameters over time for dynamic effects:
+
+```python
+# Increasing intensity
+for i in range(frames):
+    stretch = i / frames * max_stretch
+    frame = warp_with_stretch(image, stretch)
+```
+
+## Effect Selection Guide
+
+| Effect | Best For | Avoid When |
+|--------|----------|------------|
+| Pivot | General distortion, pixel art | Need smooth motion |
+| Wave | Flowing animations, water | Need random chaos |
+| Bias | Melting, gravity effects | Need symmetric distortion |
+
+## Performance Tips
+
+1. **Preview First**: Test with low resolution
+2. **Start Small**: Begin with subtle parameters
+3. **Batch Process**: Reuse effect configurations
+4. **Cache Results**: Save intermediate frames
+
+## Troubleshooting Effects
+
+### Too Chaotic
+- Reduce max_stretch
+- Increase temporal_smoothing
+- Use fewer frames
+
+### Too Predictable
+- Add slight randomization
+- Combine multiple effects
+- Vary parameters over time
+
+### Performance Issues
+- Reduce image resolution
+- Lower frame count
+- Disable upscaling during preview

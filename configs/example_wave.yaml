@@ -1,0 +1,22 @@
+# Example configuration for wave-based animation
+effect:
+  type: wave
+  max_stretch: 0.4
+  wave_amplitude: 0.15
+  wave_frequency: 2.5
+  wave_phase_shift: 0.0
+  wave_phase_speed: 1.5
+  seed: 42
+
+animation:
+  frames: 60
+  fps: 30
+  interpolation: bilinear
+  temporal_smoothing: 0.6
+  upscale: 2
+  cumulative: false
+  frame_generator: standard
+
+output:
+  format: mp4
+  codec: libx264
