@@ -221,6 +221,45 @@ composite = CompositeEffect(
 )
 ```
 
+### Advanced Parameters
+
+#### Stretch Curves
+
+The `stretch_curves` parameter allows you to control how each effect's intensity changes over time:
+
+```python
+# Create composite with different timing curves
+composite = CompositeEffect(
+    effects=[wave, melt],
+    weights=[0.6, 0.4],
+    stretch_curves=['ease_in', 'constant']  # Wave eases in, melt stays constant
+)
+```
+
+Available curve types:
+- **constant**: Effect maintains full intensity throughout animation
+- **linear**: Effect scales linearly with animation progress (default)
+- **ease_in**: Effect starts slow and accelerates (quadratic)
+- **ease_out**: Effect starts fast and decelerates
+- **ease_in_out**: Effect starts and ends slowly with faster middle
+
+This is particularly useful for creating complex animations where different effects need different timing:
+
+```python
+# Example: Wave that fades in while melting stays constant
+ripple = WaveDistortionEffect(max_stretch=0.2, wave_frequency=3)
+melt = BiasedStretchEffect(max_stretch=0.5, stretch_bias=0.9)
+
+composite = CompositeEffect(
+    effects=[ripple, melt],
+    weights=[0.3, 0.7],
+    stretch_curves=['ease_in_out', 'constant']
+)
+
+# The ripple effect will gradually fade in and out
+# while the melting effect remains at full strength
+```
+
 ### Use Cases
 
 1. **Ocean Waves + Gravity**: Realistic water motion

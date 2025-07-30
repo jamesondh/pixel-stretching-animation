@@ -162,7 +162,36 @@ bias = BiasedStretchEffect(max_stretch=0.5, stretch_bias=0.5)
 
 composite = CompositeEffect(
     effects=[wave, bias],
-    weights=[0.7, 0.3]  # 70% wave, 30% bias
+    weights=[0.7, 0.3],  # 70% wave, 30% bias
+    stretch_curves=['linear', 'constant']  # Optional: control timing curves
+)
+```
+
+**Parameters:**
+- `effects`: List of DistortionEffect instances to combine
+- `weights`: Optional list of weights for each effect (normalized automatically)
+- `stretch_curves`: Optional list of timing curves for each effect
+  - `'constant'`: Effect maintains full intensity throughout
+  - `'linear'`: Effect scales with animation progress (default)
+  - `'ease_in'`: Effect starts slow and accelerates
+  - `'ease_out'`: Effect starts fast and decelerates
+  - `'ease_in_out'`: Effect starts and ends slowly
+
+**Methods:**
+
+`generate_factors(width, frame, total_frames)`: Generate combined distortion factors
+
+`generate_factors_with_scale(width, frame, total_frames, stretch_scale, end_stretch)`: 
+Generate factors with per-effect stretch curves. This method allows fine-grained control over how each effect's intensity changes throughout the animation.
+
+```python
+# Example using generate_factors_with_scale
+factors = composite.generate_factors_with_scale(
+    width=image.width,
+    frame=current_frame,
+    total_frames=60,
+    stretch_scale=0.5,  # Overall animation progress
+    end_stretch=1.0     # Maximum stretch value
 )
 ```
 

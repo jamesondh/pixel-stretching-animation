@@ -122,6 +122,8 @@ The `examples/` directory contains demonstration scripts:
 - `advanced_effects.py`: Custom effect implementations
 - `biased_stretch.py`: Directional stretching examples
 - `upscale_demo.py`: Upscaling demonstrations
+- `stretch_curves_demo.py`: Demonstrates timing curves for composite effects
+- `constant_stretch_demo.py`: Shows constant stretch behavior
 
 Run the comprehensive demo:
 
