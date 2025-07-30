@@ -3,11 +3,11 @@
 # Use smaller values (0.3-0.6) for subtle effects, larger for dramatic melting
 effect:
   type: bias
-  max_stretch: 0.6 # This is overridden by end_stretch
+  max_stretch: 0.2
   stretch_curve: linear
-  stretch_bias: 0.85 # Strong downward bias for melting
+  stretch_bias: 0.15 # Slight downward bias for melting
   start_stretch: 0.0
-  end_stretch: 0.8 # Total accumulated stretch by the end
+  end_stretch: 0.2 # Total accumulated stretch by the end
   seed: 42
 
 animation:

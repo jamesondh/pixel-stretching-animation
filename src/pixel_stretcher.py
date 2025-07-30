@@ -282,8 +282,15 @@ class PixelStretcher:
             stretch_scale = self._calculate_stretch_scale(t)
             
             # Generate factors using effect
-            factors = self.effect.generate_factors(width, frame, total_frames)
-            factors = factors * stretch_scale
+            # Pass stretch_scale to the effect so composite effects can handle it differently
+            if hasattr(self.effect, 'generate_factors_with_scale'):
+                # Also pass the end_stretch for constant curve handling
+                factors = self.effect.generate_factors_with_scale(
+                    width, frame, total_frames, stretch_scale, self.end_stretch
+                )
+            else:
+                factors = self.effect.generate_factors(width, frame, total_frames)
+                factors = factors * stretch_scale
             
             # Apply temporal smoothing
             factors = self._apply_temporal_smoothing(factors)
@@ -408,7 +415,3 @@ class PixelStretcher:
     def reset(self) -> None:
         """Reset temporal state."""
         self._previous_factors = None
-
-
-# Alias for backward compatibility
-PixelStretcherV2 = PixelStretcher

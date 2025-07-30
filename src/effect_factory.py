@@ -45,6 +45,7 @@ def create_composite_effect(config: EffectConfig) -> CompositeEffect:
         raise ValueError("Composite effect requires 'effects' list")
     
     sub_effects = []
+    stretch_curves = []
     for effect_dict in config.effects:
         # Create a temporary EffectConfig for each sub-effect
         sub_config = EffectConfig()
@@ -52,6 +53,10 @@ def create_composite_effect(config: EffectConfig) -> CompositeEffect:
         # Copy common parameters from parent config if not specified
         effect_dict.setdefault('max_stretch', config.max_stretch)
         effect_dict.setdefault('seed', config.seed)
+        
+        # Extract stretch_curve for this effect
+        stretch_curve = effect_dict.get('stretch_curve', 'linear')
+        stretch_curves.append(stretch_curve)
         
         # Update sub_config with effect parameters
         for key, value in effect_dict.items():
@@ -65,7 +70,7 @@ def create_composite_effect(config: EffectConfig) -> CompositeEffect:
     # Use provided weights or default to equal weights
     weights = config.weights if config.weights else None
     
-    return CompositeEffect(effects=sub_effects, weights=weights)
+    return CompositeEffect(effects=sub_effects, weights=weights, stretch_curves=stretch_curves)
 
 
 def create_effect_from_dict(effect_dict: Dict[str, Any]) -> DistortionEffect:

@@ -160,10 +160,13 @@ class PivotStretchEffect(DistortionEffect):
 class CompositeEffect(DistortionEffect):
     """Combine multiple distortion effects."""
     
-    def __init__(self, effects: list[DistortionEffect], weights: Optional[list[float]] = None):
+    def __init__(self, effects: list[DistortionEffect], weights: Optional[list[float]] = None,
+                 stretch_curves: Optional[list[str]] = None):
         self.effects = effects
         self.weights = weights or [1.0 / len(effects)] * len(effects)
+        self.stretch_curves = stretch_curves or ['linear'] * len(effects)
         assert len(self.weights) == len(self.effects), "Weights must match number of effects"
+        assert len(self.stretch_curves) == len(self.effects), "Stretch curves must match number of effects"
         
         # Normalize weights
         total_weight = sum(self.weights)
@@ -174,6 +177,35 @@ class CompositeEffect(DistortionEffect):
         combined_factors = np.zeros(width)
         for effect, weight in zip(self.effects, self.weights):
             combined_factors += effect.generate_factors(width, frame, total_frames) * weight
+        return combined_factors
+    
+    def generate_factors_with_scale(self, width: int, frame: int, total_frames: int, 
+                                   stretch_scale: float, end_stretch: float) -> np.ndarray:
+        """Generate factors with per-effect stretch curves."""
+        combined_factors = np.zeros(width)
+        t = frame / max(total_frames - 1, 1) if frame > 0 else 0
+        
+        for effect, weight, curve in zip(self.effects, self.weights, self.stretch_curves):
+            # Calculate individual stretch scale based on curve type
+            if curve == 'constant':
+                # For constant curve, always use the full end_stretch value
+                effect_scale = end_stretch
+            elif curve == 'linear':
+                # For linear, scale with the overall animation progress
+                effect_scale = stretch_scale
+            elif curve == 'ease_in':
+                effect_scale = end_stretch * (t * t)
+            elif curve == 'ease_out':
+                effect_scale = end_stretch * (t * (2.0 - t))
+            elif curve == 'ease_in_out':
+                effect_scale = end_stretch * (t * t * (3.0 - 2.0 * t))
+            else:
+                effect_scale = stretch_scale
+            
+            # Generate factors for this effect and scale them
+            factors = effect.generate_factors(width, frame, total_frames)
+            combined_factors += factors * effect_scale * weight
+            
         return combined_factors
     
     def warp_column(self, column: np.ndarray, factor: float, column_index: int,

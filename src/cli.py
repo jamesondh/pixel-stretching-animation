@@ -9,7 +9,6 @@ import json
 import yaml
 
 from .pixel_stretcher import PixelStretcher
-from .pixel_stretcher_v2 import PixelStretcherV2
 from .config import PixelStretchConfig, get_preset, PRESETS
 from .distortion_effects import BiasedStretchEffect, WaveDistortionEffect, PivotStretchEffect
 from .animation import AnimationEngine, StandardFrameGenerator, CumulativeFrameGenerator, PingPongFrameGenerator
@@ -106,7 +105,7 @@ def animate(input_path, output_path, preset, config, frames, fps, max_stretch,
     effect = create_effect_from_config(cfg.effect)
     
     # Create stretcher with the effect
-    stretcher = PixelStretcherV2(
+    stretcher = PixelStretcher(
         effect=effect,
         interpolation=cfg.animation.interpolation,
         temporal_smoothing=cfg.animation.temporal_smoothing,
