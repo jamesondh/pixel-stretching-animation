@@ -4,8 +4,10 @@ import imageio
 from typing import Optional, Union, Literal, List, Tuple, Callable
 from pathlib import Path
 from .distortion_effects import (
-    BiasedStretchEffect, WaveDistortionEffect, PivotStretchEffect, DistortionEffect
+    BiasedStretchEffect, WaveDistortionEffect, PivotStretchEffect, DistortionEffect,
+    HorizontalStretchEffect, RotatedStretchEffect
 )
+from scipy.ndimage import rotate
 
 
 class PixelStretcher:
@@ -134,6 +136,19 @@ class PixelStretcher:
                       (1 - self.temporal_smoothing) * factors)
         
         self._previous_factors = factors.copy()
+        return factors
+    
+    def _generate_factors_for_effect(self, effect: DistortionEffect, width: int, 
+                                   frame: int, total_frames: int, stretch_scale: float) -> np.ndarray:
+        """Generate factors for an effect with proper scaling."""
+        if hasattr(effect, 'generate_factors_with_scale'):
+            # Also pass the end_stretch for constant curve handling
+            factors = effect.generate_factors_with_scale(
+                width, frame, total_frames, stretch_scale, self.end_stretch
+            )
+        else:
+            factors = effect.generate_factors(width, frame, total_frames)
+            factors = factors * stretch_scale
         return factors
     
     def _warp_column_nearest(
@@ -281,25 +296,77 @@ class PixelStretcher:
             t = frame / max(total_frames - 1, 1) if frame > 0 else 0
             stretch_scale = self._calculate_stretch_scale(t)
             
-            # Generate factors using effect
-            # Pass stretch_scale to the effect so composite effects can handle it differently
-            if hasattr(self.effect, 'generate_factors_with_scale'):
-                # Also pass the end_stretch for constant curve handling
-                factors = self.effect.generate_factors_with_scale(
-                    width, frame, total_frames, stretch_scale, self.end_stretch
+            # Handle special effect types
+            if isinstance(self.effect, HorizontalStretchEffect):
+                # Transpose image for horizontal processing
+                image_transposed = image.transpose(1, 0, 2) if len(image.shape) == 3 else image.T
+                output_transposed = np.zeros_like(image_transposed)
+                height_t, width_t = image_transposed.shape[:2]
+                
+                # Generate factors for transposed dimensions
+                factors = self._generate_factors_for_effect(
+                    self.effect, width_t, frame, total_frames, stretch_scale
                 )
+                factors = self._apply_temporal_smoothing(factors)
+                
+                # Process transposed image
+                for x in range(width_t):
+                    output_transposed[:, x] = self.effect.warp_column(
+                        image_transposed[:, x], factors[x], x, width_t, height_t
+                    )
+                
+                # Transpose back
+                output = output_transposed.transpose(1, 0, 2) if len(output_transposed.shape) == 3 else output_transposed.T
+                
+            elif isinstance(self.effect, RotatedStretchEffect):
+                # Rotate image, apply effect, rotate back
+                angle = self.effect.angle
+                
+                # Rotate image
+                rotated_image = rotate(image, angle, reshape=True, order=1)
+                rotated_output = np.zeros_like(rotated_image)
+                rot_height, rot_width = rotated_image.shape[:2]
+                
+                # Generate factors for rotated dimensions
+                factors = self._generate_factors_for_effect(
+                    self.effect, rot_width, frame, total_frames, stretch_scale
+                )
+                factors = self._apply_temporal_smoothing(factors)
+                
+                # Process rotated image
+                for x in range(rot_width):
+                    if len(rotated_image.shape) == 3:
+                        rotated_output[:, x] = self.effect.warp_column(
+                            rotated_image[:, x], factors[x], x, rot_width, rot_height
+                        )
+                    else:
+                        rotated_output[:, x] = self.effect.warp_column(
+                            rotated_image[:, x], factors[x], x, rot_width, rot_height
+                        )
+                
+                # Rotate back and crop to original size
+                output_full = rotate(rotated_output, -angle, reshape=True, order=1)
+                
+                # Calculate crop to match original size
+                h_diff = output_full.shape[0] - height
+                w_diff = output_full.shape[1] - width
+                h_start = h_diff // 2
+                w_start = w_diff // 2
+                
+                output = output_full[h_start:h_start+height, w_start:w_start+width]
+                
             else:
-                factors = self.effect.generate_factors(width, frame, total_frames)
-                factors = factors * stretch_scale
-            
-            # Apply temporal smoothing
-            factors = self._apply_temporal_smoothing(factors)
-            
-            # Warp each column using effect
-            for x in range(width):
-                output[:, x] = self.effect.warp_column(
-                    image[:, x], factors[x], x, width, height
+                # Standard vertical effect processing
+                factors = self._generate_factors_for_effect(
+                    self.effect, width, frame, total_frames, stretch_scale
                 )
+                factors = self._apply_temporal_smoothing(factors)
+                
+                # Warp each column using effect
+                for x in range(width):
+                    output[:, x] = self.effect.warp_column(
+                        image[:, x], factors[x], x, width, height
+                    )
         else:
             # V1 mode: Use legacy logic
             factors = self._generate_stretch_factors(width, stretch_scale)

@@ -1,0 +1,21 @@
+# Rotated melting effect - 30 degree angle
+effect:
+  type: bias
+  max_stretch: 0.8
+  stretch_bias: 1.0  # Full bias for melting effect
+  seed: 999
+  stretch_curve: ease_in
+  start_stretch: 0.0
+  end_stretch: 0.8
+
+animation:
+  frames: 120
+  fps: 30
+  interpolation: nearest
+  temporal_smoothing: 0.05
+  upscale: 2
+  cumulative: true
+
+# To use this with rotated axis:
+# pixel-stretch animate input.png output.mp4 --config configs/example_rotated_melt.yaml --axis 30
+# Try different angles: 15, 30, 45, 60, 75, 90, -30, -45, etc.

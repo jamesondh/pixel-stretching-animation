@@ -9,6 +9,7 @@ This guide provides detailed information about each distortion effect, including
 3. [Bias Effect](#bias-effect)
 4. [Composite Effects](#composite-effects)
 5. [Effect Combinations](#effect-combinations)
+6. [Axis Control](#axis-control)
 
 ## Pivot Effect
 
@@ -290,3 +291,82 @@ for i in range(frames):
 - Reduce image resolution
 - Lower frame count
 - Disable upscaling during preview
+
+## Axis Control
+
+Control the direction of stretching with the `--axis` parameter. All effects support axis transformation.
+
+### How It Works
+
+By default, all effects apply vertical stretching (up/down). The axis parameter allows you to:
+- Apply effects horizontally (left/right)
+- Apply effects at any arbitrary angle
+- Create unique directional distortions
+
+### Axis Options
+
+- **vertical** (default): Standard up/down stretching
+- **horizontal**: Left/right stretching
+- **angle** (degrees): Any angle from -180 to 180
+
+### Examples
+
+```bash
+# Horizontal wave effect (left-right motion)
+pixel-stretch animate ocean.png waves.mp4 \
+  --effect wave \
+  --axis horizontal \
+  --wave-amplitude 0.1
+
+# Diagonal melting at 45 degrees
+pixel-stretch animate ice.png diagonal_melt.mp4 \
+  --effect bias \
+  --axis 45 \
+  --stretch-bias 0.8 \
+  --cumulative
+
+# Horizontal pivot stretch (sideways wobble)
+pixel-stretch animate character.png wobble.mp4 \
+  --effect pivot \
+  --axis horizontal \
+  --pivot center
+
+# Rotated wave at -30 degrees
+pixel-stretch animate fabric.png rotated_wave.mp4 \
+  --effect wave \
+  --axis -30 \
+  --wave-frequency 3
+```
+
+### Creative Applications
+
+1. **Horizontal Effects**
+   - Wind effects on flags or hair
+   - Sideways melting or morphing
+   - Horizontal wave patterns for water surfaces
+
+2. **Diagonal Effects**
+   - Rain or snow falling at an angle
+   - Slanted melting effects
+   - Dynamic motion blur alternatives
+
+3. **Custom Angles**
+   - Match the angle of objects in the scene
+   - Create spiral-like distortions
+   - Simulate perspective-based stretching
+
+### Technical Notes
+
+- Horizontal mode transposes the image internally for processing
+- Arbitrary angles use rotation transforms with proper anti-aliasing
+- Performance is similar across all axis modes
+- All other effect parameters work normally with axis transformations
+
+### Best Practices
+
+1. **Match Content**: Align the axis with natural directions in your image
+2. **Combine with Effects**: Different axes work better with different effects
+   - Horizontal + Wave: Great for flags and water
+   - 45° + Bias: Interesting diagonal melting
+   - -45° + Pivot: Dynamic corner stretching
+3. **Experiment**: Non-standard angles can create unique, unexpected results

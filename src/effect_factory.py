@@ -5,21 +5,22 @@ Factory for creating distortion effects from configuration.
 from typing import Dict, Any, List, Optional
 from .distortion_effects import (
     DistortionEffect, BiasedStretchEffect, WaveDistortionEffect, 
-    PivotStretchEffect, CompositeEffect
+    PivotStretchEffect, CompositeEffect, HorizontalStretchEffect, RotatedStretchEffect
 )
 from .config import EffectConfig
 
 
-def create_effect_from_config(config: EffectConfig) -> DistortionEffect:
+def create_effect_from_config(config: EffectConfig, axis: Optional[str] = None) -> DistortionEffect:
     """Create a distortion effect instance from configuration."""
+    # Create base effect
     if config.type == 'pivot':
-        return PivotStretchEffect(
+        base_effect = PivotStretchEffect(
             max_stretch=config.max_stretch,
             pivot=config.pivot,
             seed=config.seed
         )
     elif config.type == 'wave':
-        return WaveDistortionEffect(
+        base_effect = WaveDistortionEffect(
             max_stretch=config.max_stretch,
             wave_amplitude=config.wave_amplitude,
             wave_frequency=config.wave_frequency,
@@ -28,15 +29,29 @@ def create_effect_from_config(config: EffectConfig) -> DistortionEffect:
             seed=config.seed
         )
     elif config.type == 'bias':
-        return BiasedStretchEffect(
+        base_effect = BiasedStretchEffect(
             max_stretch=config.max_stretch,
             stretch_bias=config.stretch_bias,
             seed=config.seed
         )
     elif config.type == 'composite':
-        return create_composite_effect(config)
+        base_effect = create_composite_effect(config)
     else:
         raise ValueError(f"Unknown effect type: {config.type}")
+    
+    # Apply axis transformation if specified
+    if axis and axis != 'vertical':
+        if axis == 'horizontal':
+            return HorizontalStretchEffect(base_effect)
+        else:
+            try:
+                # Try to parse as angle
+                angle = float(axis)
+                return RotatedStretchEffect(base_effect, angle)
+            except ValueError:
+                raise ValueError(f"Invalid axis: {axis}. Must be 'vertical', 'horizontal', or a number (angle in degrees)")
+    
+    return base_effect
 
 
 def create_composite_effect(config: EffectConfig) -> CompositeEffect:

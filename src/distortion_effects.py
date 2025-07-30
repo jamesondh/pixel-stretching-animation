@@ -1,6 +1,7 @@
 import numpy as np
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 from abc import ABC, abstractmethod
+from scipy.ndimage import rotate
 
 
 class DistortionEffect(ABC):
@@ -213,3 +214,57 @@ class CompositeEffect(DistortionEffect):
         # For composite effects, we'll use the first effect's warp method
         # In practice, you might want to blend warping methods too
         return self.effects[0].warp_column(column, factor, column_index, total_width, height)
+
+
+class HorizontalStretchEffect(DistortionEffect):
+    """Horizontal stretching effect - stretches left/right instead of up/down."""
+    
+    def __init__(self, base_effect: DistortionEffect):
+        """
+        Wrap any existing effect to work horizontally.
+        
+        Args:
+            base_effect: The underlying effect to apply horizontally
+        """
+        self.base_effect = base_effect
+    
+    def generate_factors(self, width: int, frame: int = 0, total_frames: int = 60) -> np.ndarray:
+        # For horizontal stretching, we need factors for each row instead of column
+        # But since we'll transpose the image, we use height as the dimension
+        # This will be called with the transposed dimensions
+        return self.base_effect.generate_factors(width, frame, total_frames)
+    
+    def warp_column(self, column: np.ndarray, factor: float, column_index: int,
+                   total_width: int, height: int) -> np.ndarray:
+        # This will actually be warping rows when used with transposed image
+        return self.base_effect.warp_column(column, factor, column_index, total_width, height)
+
+
+class RotatedStretchEffect(DistortionEffect):
+    """Apply stretching effect at an arbitrary angle."""
+    
+    def __init__(self, base_effect: DistortionEffect, angle: float):
+        """
+        Rotate the stretching effect by a given angle.
+        
+        Args:
+            base_effect: The underlying effect to apply
+            angle: Rotation angle in degrees (0 = vertical, 90 = horizontal)
+        """
+        self.base_effect = base_effect
+        self.angle = angle
+        self._factors_cache = None
+        self._cache_frame = -1
+    
+    def generate_factors(self, width: int, frame: int = 0, total_frames: int = 60) -> np.ndarray:
+        # Cache factors for the same frame to avoid regenerating
+        if frame != self._cache_frame:
+            self._factors_cache = self.base_effect.generate_factors(width, frame, total_frames)
+            self._cache_frame = frame
+        return self._factors_cache
+    
+    def warp_column(self, column: np.ndarray, factor: float, column_index: int,
+                   total_width: int, height: int) -> np.ndarray:
+        # For rotated effect, we need to handle this differently
+        # This method will be called from a modified warp_frame implementation
+        return self.base_effect.warp_column(column, factor, column_index, total_width, height)

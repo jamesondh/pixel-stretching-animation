@@ -10,7 +10,10 @@ import yaml
 
 from .pixel_stretcher import PixelStretcher
 from .config import PixelStretchConfig, get_preset, PRESETS
-from .distortion_effects import BiasedStretchEffect, WaveDistortionEffect, PivotStretchEffect
+from .distortion_effects import (
+    BiasedStretchEffect, WaveDistortionEffect, PivotStretchEffect,
+    HorizontalStretchEffect, RotatedStretchEffect
+)
 from .animation import AnimationEngine, StandardFrameGenerator, CumulativeFrameGenerator, PingPongFrameGenerator
 from .effect_factory import create_effect_from_config
 
@@ -54,10 +57,12 @@ def cli():
               help='Starting stretch value (defaults to 0)')
 @click.option('--end-stretch', type=float, default=None,
               help='Ending stretch value (defaults to max-stretch)')
+@click.option('--axis', type=str, default='vertical',
+              help='Stretch axis: "vertical", "horizontal", or angle in degrees (e.g., "45")')
 def animate(input_path, output_path, preset, config, frames, fps, max_stretch, 
            effect, pivot, interpolation, temporal_smoothing, seed, upscale, 
            cumulative, wave_amplitude, wave_frequency, stretch_bias,
-           stretch_curve, start_stretch, end_stretch):
+           stretch_curve, start_stretch, end_stretch, axis):
     """Create a pixel-stretching animation from an input image."""
     
     input_path = Path(input_path)
@@ -101,8 +106,8 @@ def animate(input_path, output_path, preset, config, frames, fps, max_stretch,
     click.echo(f"Creating animation from {input_path}")
     click.echo(f"Effect: {cfg.effect.type}, {cfg.animation.frames} frames at {cfg.animation.fps} fps")
     
-    # Create effect from configuration
-    effect = create_effect_from_config(cfg.effect)
+    # Create effect from configuration with axis
+    effect = create_effect_from_config(cfg.effect, axis=axis)
     
     # Create stretcher with the effect
     stretcher = PixelStretcher(
@@ -154,6 +159,16 @@ def effects():
     for effect_name, info in effects_info.items():
         click.echo(f"  {effect_name}: {info['description']}")
         click.echo(f"    Parameters: {', '.join(info['parameters'])}\n")
+    
+    click.echo("Axis options:")
+    click.echo("  All effects can be applied along different axes using the --axis parameter:")
+    click.echo("    vertical    : Default vertical stretching (up/down)")
+    click.echo("    horizontal  : Horizontal stretching (left/right)")
+    click.echo("    <degrees>   : Any angle in degrees (e.g., 45, -30, 90)\n")
+    click.echo("  Examples:")
+    click.echo("    --axis horizontal        # Left-right stretching")
+    click.echo("    --axis 45               # Diagonal stretching at 45°")
+    click.echo("    --axis -30              # Diagonal stretching at -30°")
 
 
 @cli.command()

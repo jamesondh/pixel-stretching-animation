@@ -47,6 +47,9 @@ pixel-stretch animate INPUT_PATH OUTPUT_PATH [OPTIONS]
 - `--start-stretch FLOAT`: Starting stretch value 0-1 (default: 0)
 - `--end-stretch FLOAT`: Ending stretch value 0-1 (default: max-stretch)
 
+**Axis Options:**
+- `--axis STRING`: Stretch axis: "vertical", "horizontal", or angle in degrees (e.g., "45") (default: vertical)
+
 **Rendering Options:**
 - `--interpolation [nearest|bilinear]`: Interpolation method (default: nearest)
 - `--temporal-smoothing, -t FLOAT`: Temporal smoothing factor 0-1 (default: 0.0)
@@ -104,6 +107,16 @@ Reverse animation (distorted to normal):
 pixel-stretch animate input.png output.mp4 --start-stretch 0.8 --end-stretch 0.0
 ```
 
+Horizontal stretching:
+```bash
+pixel-stretch animate input.png output.mp4 --effect pivot --axis horizontal
+```
+
+Diagonal wave effect at 45 degrees:
+```bash
+pixel-stretch animate input.png output.mp4 --effect wave --axis 45 --wave-amplitude 0.15
+```
+
 ### effects
 
 List available effects and their parameters.
@@ -124,6 +137,17 @@ Available effects:
 
   bias: Directional stretching with configurable bias
     Parameters: max_stretch, stretch_bias (-1 to 1)
+
+Axis options:
+  All effects can be applied along different axes using the --axis parameter:
+    vertical    : Default vertical stretching (up/down)
+    horizontal  : Horizontal stretching (left/right)
+    <degrees>   : Any angle in degrees (e.g., 45, -30, 90)
+
+  Examples:
+    --axis horizontal        # Left-right stretching
+    --axis 45               # Diagonal stretching at 45°
+    --axis -30              # Diagonal stretching at -30°
 ```
 
 ### presets

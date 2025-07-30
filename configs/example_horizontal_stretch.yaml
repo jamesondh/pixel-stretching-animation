@@ -1,0 +1,20 @@
+# Horizontal stretching effect - left/right movement
+effect:
+  type: bias
+  max_stretch: 0.6
+  stretch_bias: 0.8  # Bias towards rightward movement
+  seed: 42
+  stretch_curve: ease_in_out
+  start_stretch: 0.0
+  end_stretch: 0.6
+
+animation:
+  frames: 60
+  fps: 30
+  interpolation: bilinear
+  temporal_smoothing: 0.2
+  upscale: 2
+  cumulative: true
+
+# To use this with horizontal axis:
+# pixel-stretch animate input.png output.mp4 --config configs/example_horizontal_stretch.yaml --axis horizontal

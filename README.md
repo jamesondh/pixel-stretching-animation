@@ -9,6 +9,7 @@ A modular Python library for creating mesmerizing pixel-stretching animations fr
   - Wave distortion with animated phase
   - Directional bias (melting/floating effects)
   - Composite effects (combine multiple distortions)
+  - Horizontal and arbitrary angle stretching
 - **Advanced animation modes**:
   - Standard (increasing distortion)
   - Cumulative (building on previous frames)
@@ -54,6 +55,12 @@ pixel-stretch animate input.png output.mp4 --effect wave --wave-amplitude 0.2
 
 # Melting effect
 pixel-stretch animate input.png output.mp4 --effect bias --stretch-bias 0.8 --cumulative
+
+# Horizontal stretching
+pixel-stretch animate input.png output.mp4 --effect pivot --axis horizontal
+
+# Diagonal stretching at 45 degrees
+pixel-stretch animate input.png output.mp4 --effect wave --axis 45
 
 # Using configuration file
 pixel-stretch animate input.png output.mp4 --config configs/example_wave.yaml

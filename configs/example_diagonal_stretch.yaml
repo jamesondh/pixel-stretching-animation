@@ -1,0 +1,23 @@
+# Diagonal stretching effect - 45 degree angle
+effect:
+  type: wave
+  max_stretch: 0.5
+  wave_amplitude: 0.15
+  wave_frequency: 3.0
+  wave_phase_shift: 0.0
+  wave_phase_speed: 0.3
+  seed: 123
+  stretch_curve: linear
+  start_stretch: 0.0
+  end_stretch: 0.5
+
+animation:
+  frames: 90
+  fps: 30
+  interpolation: bilinear
+  temporal_smoothing: 0.1
+  upscale: 1
+  cumulative: false
+
+# To use this with diagonal axis:
+# pixel-stretch animate input.png output.mp4 --config configs/example_diagonal_stretch.yaml --axis 45
