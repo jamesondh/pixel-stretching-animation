@@ -1,0 +1,29 @@
+# Example: Wave + Melting composite effect
+# Creates a wavy melting effect by combining wave distortion with downward bias
+
+effect:
+  type: composite
+  max_stretch: 0.6
+  stretch_curve: ease_in_out
+  start_stretch: 0.0
+  end_stretch: 0.8
+  effects:
+    - type: wave
+      wave_amplitude: 0.15
+      wave_frequency: 3.0
+      wave_phase_speed: 0.3
+    - type: bias
+      stretch_bias: 0.7  # Strong downward bias for melting
+  weights: [0.6, 0.4]  # 60% wave, 40% melting
+
+animation:
+  frames: 90
+  fps: 30
+  interpolation: bilinear
+  temporal_smoothing: 0.2
+  upscale: 3
+  cumulative: false  # Non-cumulative for cleaner wave patterns
+
+output:
+  format: mp4
+  codec: libx264

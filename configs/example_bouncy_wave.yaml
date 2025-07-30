@@ -1,0 +1,31 @@
+# Example: Pivot + Wave composite effect
+# Creates a bouncy wave effect by combining pivot stretching with wave distortion
+
+effect:
+  type: composite
+  max_stretch: 0.5
+  stretch_curve: ease_in_out
+  start_stretch: 0.0
+  end_stretch: 0.6
+  seed: 42
+  effects:
+    - type: pivot
+      pivot: center
+    - type: wave
+      wave_amplitude: 0.2
+      wave_frequency: 2.5
+      wave_phase_speed: 0.5
+  weights: [0.7, 0.3]  # 70% pivot, 30% wave
+
+animation:
+  frames: 60
+  fps: 30
+  interpolation: nearest  # Keeps crisp pixel art look
+  temporal_smoothing: 0.1
+  upscale: 4
+  cumulative: false
+  frame_generator: standard
+
+output:
+  format: mp4
+  codec: libx264

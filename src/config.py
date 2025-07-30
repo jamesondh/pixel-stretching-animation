@@ -2,7 +2,7 @@
 Configuration and parameter validation module.
 """
 
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass, field
 from pathlib import Path
 import json
@@ -35,6 +35,10 @@ class EffectConfig:
     start_stretch: Optional[float] = None
     end_stretch: Optional[float] = None
     
+    # Composite effect parameters
+    effects: Optional[List[Dict[str, Any]]] = None
+    weights: Optional[List[float]] = None
+    
     def validate(self):
         """Validate effect configuration."""
         if self.type not in ['pivot', 'wave', 'bias', 'composite']:
@@ -57,6 +61,19 @@ class EffectConfig:
         
         if self.end_stretch is not None and not 0 <= self.end_stretch <= 1:
             raise ValueError("end_stretch must be between 0 and 1")
+        
+        # Validate composite effect configuration
+        if self.type == 'composite':
+            if not self.effects or len(self.effects) < 2:
+                raise ValueError("Composite effect must have at least 2 sub-effects")
+            
+            if self.weights:
+                if len(self.weights) != len(self.effects):
+                    raise ValueError("Number of weights must match number of effects")
+                if any(w < 0 for w in self.weights):
+                    raise ValueError("Weights must be non-negative")
+                if sum(self.weights) == 0:
+                    raise ValueError("At least one weight must be greater than 0")
 
 
 @dataclass

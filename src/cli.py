@@ -9,9 +9,11 @@ import json
 import yaml
 
 from .pixel_stretcher import PixelStretcher
+from .pixel_stretcher_v2 import PixelStretcherV2
 from .config import PixelStretchConfig, get_preset, PRESETS
 from .distortion_effects import BiasedStretchEffect, WaveDistortionEffect, PivotStretchEffect
 from .animation import AnimationEngine, StandardFrameGenerator, CumulativeFrameGenerator, PingPongFrameGenerator
+from .effect_factory import create_effect_from_config
 
 
 @click.group()
@@ -100,24 +102,19 @@ def animate(input_path, output_path, preset, config, frames, fps, max_stretch,
     click.echo(f"Creating animation from {input_path}")
     click.echo(f"Effect: {cfg.effect.type}, {cfg.animation.frames} frames at {cfg.animation.fps} fps")
     
-    # Create stretcher with backward compatibility
-    stretcher = PixelStretcher(
-        max_stretch=cfg.effect.max_stretch,
-        pivot=cfg.effect.pivot,
+    # Create effect from configuration
+    effect = create_effect_from_config(cfg.effect)
+    
+    # Create stretcher with the effect
+    stretcher = PixelStretcherV2(
+        effect=effect,
         interpolation=cfg.animation.interpolation,
         temporal_smoothing=cfg.animation.temporal_smoothing,
-        seed=cfg.effect.seed,
         upscale=cfg.animation.upscale,
         cumulative=cfg.animation.cumulative,
-        wave_amplitude=cfg.effect.wave_amplitude,
-        wave_frequency=cfg.effect.wave_frequency,
-        wave_phase_shift=cfg.effect.wave_phase_shift,
-        wave_phase_speed=cfg.effect.wave_phase_speed,
-        use_wave_distortion=(cfg.effect.type == 'wave'),
-        stretch_bias=cfg.effect.stretch_bias if cfg.effect.type == 'bias' else 0.0,
         stretch_curve=cfg.effect.stretch_curve,
-        start_stretch=cfg.effect.start_stretch,
-        end_stretch=cfg.effect.end_stretch
+        start_stretch=cfg.effect.start_stretch if cfg.effect.start_stretch is not None else 0.0,
+        end_stretch=cfg.effect.end_stretch if cfg.effect.end_stretch is not None else cfg.effect.max_stretch
     )
     
     # Generate animation
@@ -147,6 +144,10 @@ def effects():
         'bias': {
             'description': 'Directional stretching with configurable bias',
             'parameters': ['max_stretch', 'stretch_bias (-1 to 1)']
+        },
+        'composite': {
+            'description': 'Combine multiple effects with weighted blending',
+            'parameters': ['effects (list of effect configs)', 'weights (optional blend ratios)']
         }
     }
     
