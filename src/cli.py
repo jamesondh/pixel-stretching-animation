@@ -47,9 +47,16 @@ def cli():
 @click.option('--wave-frequency', default=2.0, help='Wave frequency (for wave effect)')
 @click.option('--stretch-bias', '-b', default=0.0, 
               help='Bias stretching direction (-1 to 1, for bias effect)')
+@click.option('--stretch-curve', type=click.Choice(['linear', 'constant', 'ease_in', 'ease_out', 'ease_in_out']),
+              default='linear', help='Animation curve for stretch progression')
+@click.option('--start-stretch', type=float, default=None,
+              help='Starting stretch value (defaults to 0)')
+@click.option('--end-stretch', type=float, default=None,
+              help='Ending stretch value (defaults to max-stretch)')
 def animate(input_path, output_path, preset, config, frames, fps, max_stretch, 
            effect, pivot, interpolation, temporal_smoothing, seed, upscale, 
-           cumulative, wave_amplitude, wave_frequency, stretch_bias):
+           cumulative, wave_amplitude, wave_frequency, stretch_bias,
+           stretch_curve, start_stretch, end_stretch):
     """Create a pixel-stretching animation from an input image."""
     
     input_path = Path(input_path)
@@ -72,6 +79,9 @@ def animate(input_path, output_path, preset, config, frames, fps, max_stretch,
         cfg.effect.wave_amplitude = wave_amplitude
         cfg.effect.wave_frequency = wave_frequency
         cfg.effect.stretch_bias = stretch_bias
+        cfg.effect.stretch_curve = stretch_curve
+        cfg.effect.start_stretch = start_stretch
+        cfg.effect.end_stretch = end_stretch
         
         cfg.animation.frames = frames
         cfg.animation.fps = fps
@@ -104,7 +114,10 @@ def animate(input_path, output_path, preset, config, frames, fps, max_stretch,
         wave_phase_shift=cfg.effect.wave_phase_shift,
         wave_phase_speed=cfg.effect.wave_phase_speed,
         use_wave_distortion=(cfg.effect.type == 'wave'),
-        stretch_bias=cfg.effect.stretch_bias if cfg.effect.type == 'bias' else 0.0
+        stretch_bias=cfg.effect.stretch_bias if cfg.effect.type == 'bias' else 0.0,
+        stretch_curve=cfg.effect.stretch_curve,
+        start_stretch=cfg.effect.start_stretch,
+        end_stretch=cfg.effect.end_stretch
     )
     
     # Generate animation

@@ -1,0 +1,20 @@
+# Example configuration for constant stretch animation
+# This maintains a consistent distortion level throughout the animation
+effect:
+  type: pivot
+  max_stretch: 0.01
+  stretch_curve: constant
+  # With constant curve, the animation always uses end_stretch
+  # (which defaults to max_stretch if not specified)
+  seed: 42
+
+animation:
+  frames: 100
+  fps: 30
+  interpolation: nearest
+  upscale: 3
+  cumulative: false
+
+output:
+  format: mp4
+  codec: libx264

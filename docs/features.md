@@ -66,7 +66,30 @@ Animation plays forward then backward.
 - Natural breathing/pulsing effects
 - No jarring transitions
 
-### 3. Rendering Options
+### 3. Animation Control
+
+#### Stretch Curves
+Control how the distortion progresses over time with different curve types.
+
+**Curve Types:**
+- **Linear**: Smooth, constant progression from start to end
+- **Constant**: Maintains the same distortion level throughout
+- **Ease In**: Starts slow, accelerates (creates anticipation)
+- **Ease Out**: Starts fast, decelerates (creates settling effect)
+- **Ease In-Out**: S-curve for smooth start and end (professional look)
+
+**Parameters:**
+- `stretch_curve`: Choose the progression type
+- `start_stretch` (0-1): Initial distortion level (default: 0)
+- `end_stretch` (0-1): Final distortion level (default: max_stretch)
+
+**Use cases:**
+- Constant stretch for static distortion effects
+- Custom start/end for partial animations
+- Reverse animations (high to low distortion)
+- Professional easing for polished results
+
+### 4. Rendering Options
 
 #### Interpolation Methods
 - **Nearest Neighbor**: Preserves hard pixel edges (best for pixel art)
@@ -82,14 +105,14 @@ Animation plays forward then backward.
 - Reduces jitter and sudden changes
 - Value from 0 (no smoothing) to 1 (maximum smoothing)
 
-### 4. Output Formats
+### 5. Output Formats
 
 Supported video formats:
 - **MP4** (recommended): Best compatibility and compression
 - **AVI**: Uncompressed option for maximum quality
 - **MOV**: QuickTime format for Mac ecosystems
 
-### 5. Advanced Features
+### 6. Advanced Features
 
 #### Composite Effects
 Combine multiple distortion effects with configurable weights.
@@ -130,6 +153,7 @@ Process multiple images with the same settings (via scripting).
    - Use nearest neighbor interpolation
    - Apply 2x-4x upscaling
    - Keep max_stretch below 0.5
+   - Try constant stretch for consistent glitch effects
 
 2. **For Smooth Animations**:
    - Enable temporal smoothing (0.5-0.8)
@@ -140,3 +164,9 @@ Process multiple images with the same settings (via scripting).
    - Use cumulative mode
    - Higher max_stretch values (0.6-0.8)
    - Combine with bias for directional flow
+   - Try reverse animations (start_stretch > end_stretch)
+
+4. **For Professional Results**:
+   - Use ease_in_out curve for smooth animations
+   - Set start_stretch > 0 to avoid static first frame
+   - Experiment with partial ranges (0.2 to 0.6)

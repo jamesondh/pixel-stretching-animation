@@ -1,8 +1,13 @@
 # Example configuration for melting effect
+# Note: In cumulative mode, the stretch values compound over time
+# Use smaller values (0.3-0.6) for subtle effects, larger for dramatic melting
 effect:
   type: bias
-  max_stretch: 0.6
-  stretch_bias: 0.85  # Strong downward bias for melting
+  max_stretch: 0.6 # This is overridden by end_stretch
+  stretch_curve: linear
+  stretch_bias: 0.85 # Strong downward bias for melting
+  start_stretch: 0.0
+  end_stretch: 0.8 # Total accumulated stretch by the end
   seed: 42
 
 animation:
@@ -11,7 +16,7 @@ animation:
   interpolation: nearest
   temporal_smoothing: 0.3
   upscale: 3
-  cumulative: true  # Cumulative for progressive melting
+  cumulative: true # Cumulative for progressive melting
   frame_generator: cumulative
 
 output:

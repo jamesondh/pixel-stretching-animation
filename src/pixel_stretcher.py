@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 import imageio
-from typing import Optional, Union, Literal, List, Tuple
+from typing import Optional, Union, Literal, List, Tuple, Callable
 from pathlib import Path
 from .distortion_effects import (
     BiasedStretchEffect, WaveDistortionEffect, PivotStretchEffect
@@ -23,7 +23,11 @@ class PixelStretcher:
         wave_phase_shift: float = 0.0,
         wave_phase_speed: float = 0.2,
         use_wave_distortion: bool = False,
-        stretch_bias: float = 0.0
+        stretch_bias: float = 0.0,
+        stretch_curve: Literal['linear', 'constant', 'ease_in', 'ease_out', 'ease_in_out', 'custom'] = 'linear',
+        start_stretch: Optional[float] = None,
+        end_stretch: Optional[float] = None,
+        custom_curve_func: Optional[Callable[[float], float]] = None
     ):
         self.max_stretch = max_stretch
         self.pivot = pivot
@@ -37,6 +41,10 @@ class PixelStretcher:
         self.wave_phase_speed = wave_phase_speed
         self.use_wave_distortion = use_wave_distortion
         self.stretch_bias = np.clip(stretch_bias, -1.0, 1.0)  # Clamp between -1 and 1
+        self.stretch_curve = stretch_curve
+        self.start_stretch = start_stretch if start_stretch is not None else 0.0
+        self.end_stretch = end_stretch if end_stretch is not None else max_stretch
+        self.custom_curve_func = custom_curve_func
         self.rng = np.random.RandomState(seed)
         self._previous_factors = None
         
@@ -47,6 +55,33 @@ class PixelStretcher:
             return 0
         else:  # bottom
             return height
+    
+    def _calculate_stretch_scale(self, t: float) -> float:
+        """Calculate the stretch scale based on the curve type and progress t (0 to 1)."""
+        if self.stretch_curve == 'constant':
+            # Always use end_stretch (which defaults to max_stretch)
+            curve_value = 1.0
+        elif self.stretch_curve == 'linear':
+            # Linear interpolation (default behavior)
+            curve_value = t
+        elif self.stretch_curve == 'ease_in':
+            # Start slow, accelerate (quadratic)
+            curve_value = t * t
+        elif self.stretch_curve == 'ease_out':
+            # Start fast, decelerate
+            curve_value = t * (2.0 - t)
+        elif self.stretch_curve == 'ease_in_out':
+            # S-curve (smooth at both ends)
+            curve_value = t * t * (3.0 - 2.0 * t)
+        elif self.stretch_curve == 'custom' and self.custom_curve_func:
+            # Use custom function
+            curve_value = self.custom_curve_func(t)
+        else:
+            # Fallback to linear
+            curve_value = t
+        
+        # Interpolate between start_stretch and end_stretch
+        return self.start_stretch + (self.end_stretch - self.start_stretch) * curve_value
     
     def _generate_stretch_factors(self, width: int, stretch_scale: float = 1.0) -> np.ndarray:
         # Generate base random values between 0 and 1
@@ -77,8 +112,8 @@ class PixelStretcher:
                     else:
                         factors[i] = base_random[i] * 0.3  # Small downward movement
         
-        # Apply max stretch and scale
-        factors = factors * self.max_stretch * stretch_scale
+        # Apply stretch scale directly (it already incorporates start/end stretch)
+        factors = factors * stretch_scale
         
         if self.temporal_smoothing > 0 and self._previous_factors is not None:
             factors = (self.temporal_smoothing * self._previous_factors + 
@@ -293,21 +328,33 @@ class PixelStretcher:
                     # First frame is the original image (upscaled if needed)
                     frame_list.append(self._upscale_image(img_array))
                 else:
-                    # Apply small distortion to the last frame
-                    warped_frame = self.warp_frame(last_frame, 1.0, apply_upscale=False, time_phase=time_phase)
+                    # Calculate progress t from 0 to 1
+                    t = i / max(frames - 1, 1)
+                    # Get the current stretch value from the curve
+                    current_stretch = self._calculate_stretch_scale(t)
+                    # For cumulative mode, calculate the incremental stretch
+                    # This is the difference from the previous frame
+                    prev_t = (i - 1) / max(frames - 1, 1)
+                    prev_stretch = self._calculate_stretch_scale(prev_t)
+                    incremental_stretch = current_stretch - prev_stretch
+                    
+                    # Apply only the incremental distortion to the last frame
+                    warped_frame = self.warp_frame(last_frame, incremental_stretch, apply_upscale=False, time_phase=time_phase)
                     last_frame = warped_frame.copy()
                     # Upscale the result for output
                     frame_list.append(self._upscale_image(warped_frame))
         else:
             # Non-cumulative mode: apply increasing distortion to original image
             for i in range(frames):
-                # Interpolate stretch scale from 0 to 1 over the animation
-                stretch_scale = i / max(frames - 1, 1)
+                # Calculate progress t from 0 to 1
+                t = i / max(frames - 1, 1)
+                # Use curve to calculate actual stretch scale
+                stretch_scale = self._calculate_stretch_scale(t)
                 # Calculate time-based phase for wave animation
-                time_phase = (i / max(frames - 1, 1)) * 2 * np.pi * self.wave_phase_speed
+                time_phase = t * 2 * np.pi * self.wave_phase_speed
                 
-                if i == 0:
-                    # First frame is the original image
+                if i == 0 and self.start_stretch == 0:
+                    # First frame is the original image only if start_stretch is 0
                     frame_list.append(self._upscale_image(img_array))
                 else:
                     # Apply distortion to the original image with upscaling

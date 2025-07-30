@@ -1,0 +1,27 @@
+# Example configuration for partial stretch range
+# Demonstrates animating between custom start and end values
+
+effect:
+  type: wave
+  max_stretch: 0.08 # This is overridden by end_stretch
+  stretch_curve: linear
+  # Animate from 20% to 60% stretch instead of 0% to max
+  start_stretch: 0.02
+  end_stretch: 0.06
+  wave_amplitude: 0.15
+  wave_frequency: 2.0
+  seed: 42
+
+animation:
+  frames: 60
+  fps: 30
+  interpolation: bilinear
+  upscale: 2
+
+output:
+  format: mp4
+  codec: libx264
+# This creates an animation that:
+# - Starts with 20% distortion (no unprocessed first frame)
+# - Smoothly increases to 60% distortion
+# - Never reaches the full 80% max_stretch value

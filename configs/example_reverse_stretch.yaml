@@ -1,0 +1,28 @@
+# Example configuration for reverse stretch animation
+# Starts with maximum distortion and gradually returns to normal
+
+effect:
+  type: bias
+  max_stretch: 0.07
+  stretch_curve: ease_in_out
+  # Reverse the animation - start distorted, end normal
+  start_stretch: 0.07
+  end_stretch: 0.0
+  stretch_bias: -0.5 # Upward floating effect
+  seed: 42
+
+animation:
+  frames: 90
+  fps: 30
+  interpolation: nearest
+  upscale: 3
+  # Don't use cumulative with reverse animations
+  cumulative: false
+
+output:
+  format: mp4
+  codec: libx264
+# This creates a "restoration" effect where:
+# - The image starts fully distorted
+# - Gradually returns to its original form
+# - Uses ease_in_out for smooth deceleration

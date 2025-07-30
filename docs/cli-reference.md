@@ -42,6 +42,11 @@ pixel-stretch animate INPUT_PATH OUTPUT_PATH [OPTIONS]
 - `--wave-amplitude FLOAT`: Wave amplitude for wave effect (default: 0.1)
 - `--wave-frequency FLOAT`: Wave frequency for wave effect (default: 2.0)
 
+**Animation Curve Options:**
+- `--stretch-curve [linear|constant|ease_in|ease_out|ease_in_out]`: Animation curve type (default: linear)
+- `--start-stretch FLOAT`: Starting stretch value 0-1 (default: 0)
+- `--end-stretch FLOAT`: Ending stretch value 0-1 (default: max-stretch)
+
 **Rendering Options:**
 - `--interpolation [nearest|bilinear]`: Interpolation method (default: nearest)
 - `--temporal-smoothing, -t FLOAT`: Temporal smoothing factor 0-1 (default: 0.0)
@@ -82,6 +87,21 @@ pixel-stretch animate input.png output.mp4 --preset pixel_art
 Loading from config file:
 ```bash
 pixel-stretch animate input.png output.mp4 --config my_animation.yaml
+```
+
+Constant stretch (no progression):
+```bash
+pixel-stretch animate input.png output.mp4 --stretch-curve constant --max-stretch 0.4
+```
+
+Custom stretch range with easing:
+```bash
+pixel-stretch animate input.png output.mp4 --stretch-curve ease_in_out --start-stretch 0.2 --end-stretch 0.6
+```
+
+Reverse animation (distorted to normal):
+```bash
+pixel-stretch animate input.png output.mp4 --start-stretch 0.8 --end-stretch 0.0
 ```
 
 ### effects

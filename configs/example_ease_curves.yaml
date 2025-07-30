@@ -1,0 +1,51 @@
+# Example configuration demonstrating different ease curves
+# These create smooth, professional-looking animations
+
+# Ease In - starts slow, accelerates
+ease_in_example:
+  effect:
+    type: wave
+    max_stretch: 0.01
+    stretch_curve: ease_in
+    start_stretch: 0.0
+    end_stretch: 0.01
+    wave_amplitude: 0.2
+    wave_frequency: 3.0
+    seed: 42
+
+  animation:
+    frames: 90
+    fps: 30
+    interpolation: bilinear
+    temporal_smoothing: 0.3
+    upscale: 2
+
+# Ease Out - starts fast, decelerates
+ease_out_example:
+  effect:
+    type: bias
+    max_stretch: 0.05
+    stretch_curve: ease_out
+    stretch_bias: 0.7 # Downward melting
+    seed: 42
+
+  animation:
+    frames: 60
+    fps: 30
+    interpolation: nearest
+    cumulative: true
+
+# Ease In-Out - smooth S-curve
+ease_in_out_example:
+  effect:
+    type: pivot
+    max_stretch: 0.03
+    stretch_curve: ease_in_out
+    pivot: center
+    seed: 42
+
+  animation:
+    frames: 120
+    fps: 60
+    interpolation: bilinear
+    temporal_smoothing: 0.5

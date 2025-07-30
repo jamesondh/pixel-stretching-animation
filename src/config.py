@@ -30,6 +30,11 @@ class EffectConfig:
     # Common parameters
     seed: Optional[int] = None
     
+    # Stretch curve parameters
+    stretch_curve: str = 'linear'  # 'linear', 'constant', 'ease_in', 'ease_out', 'ease_in_out'
+    start_stretch: Optional[float] = None
+    end_stretch: Optional[float] = None
+    
     def validate(self):
         """Validate effect configuration."""
         if self.type not in ['pivot', 'wave', 'bias', 'composite']:
@@ -43,6 +48,15 @@ class EffectConfig:
         
         if not -1 <= self.stretch_bias <= 1:
             raise ValueError("stretch_bias must be between -1 and 1")
+        
+        if self.stretch_curve not in ['linear', 'constant', 'ease_in', 'ease_out', 'ease_in_out']:
+            raise ValueError(f"Invalid stretch_curve: {self.stretch_curve}")
+        
+        if self.start_stretch is not None and not 0 <= self.start_stretch <= 1:
+            raise ValueError("start_stretch must be between 0 and 1")
+        
+        if self.end_stretch is not None and not 0 <= self.end_stretch <= 1:
+            raise ValueError("end_stretch must be between 0 and 1")
 
 
 @dataclass
