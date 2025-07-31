@@ -5,7 +5,7 @@ from typing import Optional, Union, Literal, List, Tuple, Callable
 from pathlib import Path
 from .distortion_effects import (
     BiasedStretchEffect, WaveDistortionEffect, PivotStretchEffect, DistortionEffect,
-    HorizontalStretchEffect, RotatedStretchEffect
+    HorizontalStretchEffect, RotatedStretchEffect, FlowingMeltEffect
 )
 from scipy.ndimage import rotate
 

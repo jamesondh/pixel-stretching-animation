@@ -1,0 +1,29 @@
+# Flowing melt effect - pixels melt downward while drifting horizontally
+# Creates a water-flowing-down-a-river effect with wave-like lateral movement
+
+effect:
+  type: flowing_melt
+  max_stretch: 0.5
+  melt_bias: 0.15 # Downward melting bias (0-1, higher = more downward)
+  flow_amplitude: 0.5 # Wave strength in the melting pattern (0-1)
+  flow_frequency: 4.0 # Number of wave oscillations across the width
+  flow_speed: 1.0 # Speed of wave movement
+  flow_variation: 0.2 # Randomness in flow pattern (0-1)
+  edge_behavior: wrap # Not used now, kept for compatibility
+  stretch_curve: linear
+  start_stretch: 0.0
+  end_stretch: 0.5
+  seed: 42
+
+animation:
+  frames: 200 # Longer animation to show the gradual flowing effect
+  fps: 30
+  interpolation: bilinear # Smooth interpolation for fluid motion
+  temporal_smoothing: 0.3 # Smoothing for continuous flow
+  upscale: 4
+  cumulative: true # Essential for progressive melting
+  frame_generator: cumulative
+
+output:
+  format: mp4
+  codec: libx264

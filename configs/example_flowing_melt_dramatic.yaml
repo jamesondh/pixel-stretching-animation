@@ -1,0 +1,29 @@
+# Dramatic flowing melt effect - stronger flow with fade edges
+# Creates a more pronounced water flow effect
+
+effect:
+  type: flowing_melt
+  max_stretch: 0.4
+  melt_bias: 0.2  # Stronger downward bias
+  flow_amplitude: 0.25  # Stronger horizontal drift
+  flow_frequency: 2.0  # Fewer, larger waves
+  flow_speed: 0.8  # Faster wave movement
+  flow_variation: 0.5  # More variation for turbulent flow
+  edge_behavior: fade  # Pixels fade out at edges
+  stretch_curve: ease_in  # Accelerating melt effect
+  start_stretch: 0.0
+  end_stretch: 0.4
+  seed: 42
+
+animation:
+  frames: 300
+  fps: 30
+  interpolation: bilinear
+  temporal_smoothing: 0.2  # Less smoothing for more dynamic flow
+  upscale: 4
+  cumulative: true
+  frame_generator: cumulative
+
+output:
+  format: mp4
+  codec: libx264

@@ -5,7 +5,8 @@ Factory for creating distortion effects from configuration.
 from typing import Dict, Any, List, Optional
 from .distortion_effects import (
     DistortionEffect, BiasedStretchEffect, WaveDistortionEffect, 
-    PivotStretchEffect, CompositeEffect, HorizontalStretchEffect, RotatedStretchEffect
+    PivotStretchEffect, CompositeEffect, HorizontalStretchEffect, RotatedStretchEffect,
+    FlowingMeltEffect
 )
 from .config import EffectConfig
 
@@ -36,6 +37,17 @@ def create_effect_from_config(config: EffectConfig, axis: Optional[str] = None) 
         )
     elif config.type == 'composite':
         base_effect = create_composite_effect(config)
+    elif config.type == 'flowing_melt':
+        base_effect = FlowingMeltEffect(
+            max_stretch=config.max_stretch,
+            melt_bias=getattr(config, 'melt_bias', 0.15),
+            flow_amplitude=getattr(config, 'flow_amplitude', 0.1),
+            flow_frequency=getattr(config, 'flow_frequency', 2.0),
+            flow_speed=getattr(config, 'flow_speed', 0.3),
+            flow_variation=getattr(config, 'flow_variation', 0.2),
+            edge_behavior=getattr(config, 'edge_behavior', 'wrap'),
+            seed=config.seed
+        )
     else:
         raise ValueError(f"Unknown effect type: {config.type}")
     

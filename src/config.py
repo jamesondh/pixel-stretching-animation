@@ -12,7 +12,7 @@ import yaml
 @dataclass
 class EffectConfig:
     """Configuration for distortion effects."""
-    type: str = 'pivot'  # 'pivot', 'wave', 'bias', 'composite'
+    type: str = 'pivot'  # 'pivot', 'wave', 'bias', 'composite', 'flowing_melt'
     max_stretch: float = 0.5
     
     # Pivot effect parameters
@@ -26,6 +26,14 @@ class EffectConfig:
     
     # Bias effect parameters
     stretch_bias: float = 0.0
+    
+    # Flowing melt effect parameters
+    melt_bias: float = 0.15
+    flow_amplitude: float = 0.1
+    flow_frequency: float = 2.0
+    flow_speed: float = 0.3
+    flow_variation: float = 0.2
+    edge_behavior: str = 'wrap'  # 'wrap', 'clamp', 'fade'
     
     # Common parameters
     seed: Optional[int] = None
@@ -41,7 +49,7 @@ class EffectConfig:
     
     def validate(self):
         """Validate effect configuration."""
-        if self.type not in ['pivot', 'wave', 'bias', 'composite']:
+        if self.type not in ['pivot', 'wave', 'bias', 'composite', 'flowing_melt']:
             raise ValueError(f"Invalid effect type: {self.type}")
         
         if not 0 <= self.max_stretch <= 1:
@@ -52,6 +60,19 @@ class EffectConfig:
         
         if not -1 <= self.stretch_bias <= 1:
             raise ValueError("stretch_bias must be between -1 and 1")
+        
+        # Validate flowing melt parameters
+        if not 0 <= self.melt_bias <= 1:
+            raise ValueError("melt_bias must be between 0 and 1")
+        
+        if not 0 <= self.flow_amplitude <= 1:
+            raise ValueError("flow_amplitude must be between 0 and 1")
+        
+        if not 0 <= self.flow_variation <= 1:
+            raise ValueError("flow_variation must be between 0 and 1")
+        
+        if self.edge_behavior not in ['wrap', 'clamp', 'fade']:
+            raise ValueError(f"Invalid edge_behavior: {self.edge_behavior}")
         
         if self.stretch_curve not in ['linear', 'constant', 'ease_in', 'ease_out', 'ease_in_out']:
             raise ValueError(f"Invalid stretch_curve: {self.stretch_curve}")

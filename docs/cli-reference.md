@@ -34,7 +34,7 @@ pixel-stretch animate INPUT_PATH OUTPUT_PATH [OPTIONS]
 - `--seed INTEGER`: Random seed for reproducibility
 
 **Effect Options:**
-- `--effect [pivot|wave|bias]`: Effect type to use (default: pivot)
+- `--effect [pivot|wave|bias|flowing_melt]`: Effect type to use (default: pivot)
 - `--pivot [center|top|bottom]`: Pivot point for stretching (default: center)
 - `--stretch-bias, -b FLOAT`: Bias stretching direction -1 to 1 (default: 0.0)
 
@@ -138,6 +138,10 @@ Available effects:
   bias: Directional stretching with configurable bias
     Parameters: max_stretch, stretch_bias (-1 to 1)
 
+  flowing_melt: 2D displacement effect with vertical melting and horizontal wave drift
+    Parameters: max_stretch, melt_bias (0 to 1), flow_amplitude, flow_frequency, 
+                flow_speed, flow_variation, edge_behavior (wrap/clamp/fade)
+
 Axis options:
   All effects can be applied along different axes using the --axis parameter:
     vertical    : Default vertical stretching (up/down)
@@ -232,7 +236,7 @@ pixel-stretch preview INPUT_PATH [OPTIONS]
 
 #### Options
 - `--size, -s INTEGER`: Preview size in pixels (default: 64)
-- `--effect [pivot|wave|bias]`: Effect type to preview (default: pivot)
+- `--effect [pivot|wave|bias|flowing_melt]`: Effect type to preview (default: pivot)
 - `--max-stretch FLOAT`: Maximum stretch factor (default: 0.5)
 
 #### Examples

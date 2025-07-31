@@ -35,7 +35,7 @@ def cli():
 @click.option('--frames', '-f', default=60, help='Number of frames to generate')
 @click.option('--fps', default=30, help='Frames per second')
 @click.option('--max-stretch', '-s', default=0.5, help='Maximum stretch factor (0-1)')
-@click.option('--effect', type=click.Choice(['pivot', 'wave', 'bias']), 
+@click.option('--effect', type=click.Choice(['pivot', 'wave', 'bias', 'flowing_melt']), 
               default='pivot', help='Effect type to use')
 @click.option('--pivot', type=click.Choice(['center', 'top', 'bottom']), 
               default='center', help='Pivot point for stretching')
@@ -223,7 +223,7 @@ def create_config(output_path, preset, format):
 @cli.command()
 @click.argument('input_path', type=click.Path(exists=True))
 @click.option('--size', '-s', default=64, help='Preview size (width and height)')
-@click.option('--effect', type=click.Choice(['pivot', 'wave', 'bias']), 
+@click.option('--effect', type=click.Choice(['pivot', 'wave', 'bias', 'flowing_melt']), 
               default='pivot', help='Effect type to preview')
 @click.option('--max-stretch', default=0.5, help='Maximum stretch factor')
 def preview(input_path, size, effect, max_stretch):

@@ -195,6 +195,62 @@ factors = composite.generate_factors_with_scale(
 )
 ```
 
+#### FlowingMeltEffect
+
+Creates a flowing melt effect with 2D displacement - vertical melting combined with horizontal wave-like drift.
+
+```python
+from src.distortion_effects import FlowingMeltEffect
+
+effect = FlowingMeltEffect(
+    max_stretch=0.3,
+    melt_bias=0.15,      # Downward melting strength (0-1)
+    flow_amplitude=0.15,  # Horizontal drift strength (0-1)
+    flow_frequency=3.0,   # Number of horizontal waves
+    flow_speed=0.5,       # Speed of wave movement
+    flow_variation=0.3,   # Randomness in flow (0-1)
+    edge_behavior='wrap', # 'wrap', 'clamp', or 'fade'
+    seed=42
+)
+```
+
+**Parameters:**
+- `max_stretch`: Maximum vertical stretch factor (0-1)
+- `melt_bias`: Strength of downward melting (0-1)
+- `flow_amplitude`: Horizontal drift strength (0-1)
+- `flow_frequency`: Number of horizontal wave patterns
+- `flow_speed`: Speed of horizontal wave movement
+- `flow_variation`: Random variation in flow pattern (0-1)
+- `edge_behavior`: How pixels behave at edges
+  - `'wrap'`: Pixels wrap around edges
+  - `'clamp'`: Pixels stick to edges
+  - `'fade'`: Pixels fade out at edges
+
+**Special Methods:**
+
+`calculate_horizontal_displacement(row, column, width, height, time)`: Calculate horizontal displacement for a pixel at given position and time.
+
+**Usage Example:**
+
+```python
+from src.pixel_stretcher import PixelStretcher
+from src.distortion_effects import FlowingMeltEffect
+
+# Create flowing melt effect
+flowing_melt = FlowingMeltEffect(
+    max_stretch=0.4,
+    melt_bias=0.2,
+    flow_amplitude=0.2,
+    flow_frequency=2.0,
+    flow_speed=0.6,
+    edge_behavior='fade'
+)
+
+# Use with PixelStretcher
+stretcher = PixelStretcher(effect=flowing_melt, cumulative=True)
+stretcher.create_animation('input.png', 'output.mp4', frames=200, fps=30)
+```
+
 ### Animation Classes
 
 #### AnimationEngine

@@ -7,9 +7,10 @@ This guide provides detailed information about each distortion effect, including
 1. [Pivot Effect](#pivot-effect)
 2. [Wave Effect](#wave-effect)
 3. [Bias Effect](#bias-effect)
-4. [Composite Effects](#composite-effects)
-5. [Effect Combinations](#effect-combinations)
-6. [Axis Control](#axis-control)
+4. [Flowing Melt Effect](#flowing-melt-effect)
+5. [Composite Effects](#composite-effects)
+6. [Effect Combinations](#effect-combinations)
+7. [Axis Control](#axis-control)
 
 ## Pivot Effect
 
@@ -190,6 +191,114 @@ pixel-stretch animate leaves.png falling.mp4 \
 2. **Gravity Effects**: Falling particles, rain, or snow
 3. **Magical Effects**: Floating objects, levitation
 4. **Disintegration**: Objects breaking apart and falling
+
+## Flowing Melt Effect
+
+Advanced 2D displacement effect that combines vertical melting with horizontal wave-like drift, creating fluid dynamics similar to water flowing down a river.
+
+### How It Works
+
+The flowing melt effect applies two-dimensional displacement:
+1. **Vertical melting**: Pixels are stretched downward with a bias, similar to the bias effect
+2. **Horizontal drift**: Pixels flow left and right in wave patterns that vary with depth
+3. **Depth-dependent flow**: Pixels that have melted further (lower in the image) flow more strongly
+
+### Parameters
+
+- **max_stretch** (0-1): Maximum vertical displacement
+  - 0.1-0.3: Subtle flowing effect
+  - 0.4-0.6: Moderate fluid motion
+  - 0.7-1.0: Strong flowing distortion
+
+- **melt_bias** (0-1): Strength of downward melting
+  - 0.0-0.1: Minimal melting, mostly horizontal flow
+  - 0.15-0.3: Balanced melting and flow
+  - 0.5-1.0: Strong melting with flow
+
+- **flow_amplitude** (0-1): Horizontal drift strength
+  - 0.05-0.1: Subtle sideways movement
+  - 0.15-0.25: Noticeable wave-like flow
+  - 0.3-0.5: Strong horizontal displacement
+
+- **flow_frequency** (1-10): Number of horizontal waves
+  - 1-2: Large, slow waves
+  - 3-5: Medium wave patterns
+  - 6-10: Many small ripples
+
+- **flow_speed** (0-2): Speed of wave movement
+  - 0.1-0.3: Slow, calm flow
+  - 0.5-0.8: Moderate flow speed
+  - 1.0-2.0: Rapid flow
+
+- **flow_variation** (0-1): Randomness in flow pattern
+  - 0.0: Uniform waves
+  - 0.2-0.4: Natural variation
+  - 0.5-1.0: Chaotic, turbulent flow
+
+- **edge_behavior** (wrap/clamp/fade): How pixels behave at edges
+  - `wrap`: Pixels wrap around (continuous flow)
+  - `clamp`: Pixels stick to edges
+  - `fade`: Pixels disappear at edges
+
+### Visual Characteristics
+
+- Fluid, water-like motion
+- Natural flow patterns that follow gravity
+- Depth-dependent movement (stronger flow at bottom)
+- Combines melting with lateral displacement
+- Creates organic, flowing animations
+
+### Best Practices
+
+```bash
+# Basic flowing melt
+pixel-stretch animate lava.png flowing_lava.mp4 \
+  --config configs/example_flowing_melt.yaml
+
+# Dramatic water flow
+pixel-stretch animate waterfall.png water_flow.mp4 \
+  --config configs/example_flowing_melt_dramatic.yaml
+
+# Custom flowing effect via CLI
+pixel-stretch animate ice.png melting_ice.mp4 \
+  --effect flowing_melt \
+  --max-stretch 0.35 \
+  --melt-bias 0.2 \
+  --flow-amplitude 0.2 \
+  --flow-frequency 2.5 \
+  --flow-speed 0.6 \
+  --edge-behavior wrap \
+  --cumulative \
+  --frames 200
+```
+
+### Creative Applications
+
+1. **Liquid Simulations**: Water, lava, honey, or any viscous fluid
+2. **Melting with Movement**: Ice melting and flowing away
+3. **Digital Rain Effects**: Matrix-style cascading characters with drift
+4. **Magical Dissolve**: Objects dissolving into flowing particles
+5. **Environmental Effects**: Rain on windows, flowing sand, or snow melt
+6. **Glitch Art**: Digital corruption with directional flow
+
+### Performance Considerations
+
+The flowing melt effect is computationally more intensive than single-axis effects due to:
+- 2D displacement calculations
+- Per-pixel horizontal displacement
+- Bilinear interpolation for smooth flow
+
+For better performance:
+- Use lower resolution images during testing
+- Reduce upscale factor
+- Limit frame count for previews
+- Consider using `edge_behavior: clamp` for faster processing
+
+### Configuration Examples
+
+See the included example configurations:
+- `configs/example_flowing_melt.yaml`: Balanced flowing melt effect
+- `configs/example_flowing_melt_dramatic.yaml`: Strong flow with fade edges
 
 ## Composite Effects
 

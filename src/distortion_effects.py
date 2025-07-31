@@ -268,3 +268,92 @@ class RotatedStretchEffect(DistortionEffect):
         # For rotated effect, we need to handle this differently
         # This method will be called from a modified warp_frame implementation
         return self.base_effect.warp_column(column, factor, column_index, total_width, height)
+
+
+class FlowingMeltEffect(DistortionEffect):
+    """Melting effect with wave-like horizontal drift - like water flowing down a river."""
+    
+    def __init__(self, max_stretch: float = 0.5, melt_bias: float = 0.15,
+                 flow_amplitude: float = 0.1, flow_frequency: float = 2.0,
+                 flow_speed: float = 0.3, flow_variation: float = 0.2,
+                 edge_behavior: Literal['wrap', 'clamp', 'fade'] = 'wrap',
+                 seed: Optional[int] = None):
+        """
+        Create a flowing melt effect where pixels melt downward while drifting horizontally.
+        
+        Args:
+            max_stretch: Maximum vertical stretch factor
+            melt_bias: Downward bias for melting (0 to 1, higher = more downward)
+            flow_amplitude: Horizontal drift amplitude (0 to 1)
+            flow_frequency: Number of horizontal waves
+            flow_speed: Speed of horizontal wave movement
+            flow_variation: Random variation in flow pattern (0 to 1)
+            edge_behavior: How to handle pixels drifting off edges
+            seed: Random seed for reproducibility
+        """
+        self.max_stretch = max_stretch
+        self.melt_bias = np.clip(melt_bias, 0.0, 1.0)
+        self.flow_amplitude = flow_amplitude
+        self.flow_frequency = flow_frequency
+        self.flow_speed = flow_speed
+        self.flow_variation = np.clip(flow_variation, 0.0, 1.0)
+        self.edge_behavior = edge_behavior
+        self.rng = np.random.RandomState(seed)
+        
+        # Pre-generate random flow variations for each column
+        self._flow_phases = None
+        self._flow_amp_variations = None
+        self._width_cache = 0
+    
+    def generate_factors(self, width: int, frame: int = 0, total_frames: int = 60) -> np.ndarray:
+        # Calculate current time for wave animation
+        time = frame / max(total_frames - 1, 1) if frame > 0 else 0
+        
+        # Generate vertical stretch factors with downward bias
+        base_random = self.rng.rand(width)
+        
+        # Apply melt bias - mostly downward with occasional upward
+        factors = np.zeros(width)
+        bias_probability = 0.5 + self.melt_bias * 0.4  # 50% to 90% based on bias
+        
+        for i in range(width):
+            if self.rng.rand() < bias_probability:
+                factors[i] = base_random[i]  # Positive (downward stretch)
+            else:
+                factors[i] = -base_random[i] * 0.3  # Small upward movement
+        
+        # Cache width-dependent random variations
+        if width != self._width_cache:
+            self._width_cache = width
+            self._flow_phases = self.rng.rand(width) * 2 * np.pi
+            self._flow_amp_variations = 1.0 + (self.rng.rand(width) - 0.5) * self.flow_variation
+        
+        # Apply wave modulation to create horizontal oscillations in the melting strength
+        for x in range(width):
+            # Calculate wave at this column position and time
+            wave = np.sin(2 * np.pi * self.flow_frequency * x / width + 
+                         self._flow_phases[x] + time * self.flow_speed * 2 * np.pi)
+            
+            # Modulate the stretch factor with the wave
+            # This creates columns that melt more or less based on the wave pattern
+            wave_modulation = 1.0 + wave * self.flow_amplitude * self._flow_amp_variations[x]
+            factors[x] *= wave_modulation
+        
+        return factors * self.max_stretch
+    
+    def warp_column(self, column: np.ndarray, factor: float, column_index: int,
+                   total_width: int, height: int) -> np.ndarray:
+        # Standard vertical melting - no horizontal displacement here
+        output_rows = np.arange(height)
+        
+        # Vertical melting displacement
+        if factor > 0:  # Downward stretch
+            source_rows = output_rows - factor * height * (output_rows / height)
+        else:  # Upward stretch
+            source_rows = output_rows - factor * height * (1 - output_rows / height)
+        
+        # Clip to valid range and round to nearest integer
+        source_rows = np.clip(np.round(source_rows), 0, height - 1).astype(int)
+        
+        return column[source_rows]
+    
