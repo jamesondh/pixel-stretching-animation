@@ -404,7 +404,9 @@ processor = SineWavePostProcessor(
     edge_behavior='wrap',
     amplitude_curve='constant',
     start_amplitude=None,
-    end_amplitude=None
+    end_amplitude=None,
+    interpolation='bilinear',
+    preserve_palette=False
 )
 ```
 
@@ -420,6 +422,8 @@ processor = SineWavePostProcessor(
 - **amplitude_curve** (str): Amplitude animation curve
 - **start_amplitude** (float, optional): Starting amplitude for animation
 - **end_amplitude** (float, optional): Ending amplitude for animation
+- **interpolation** (str): Interpolation method ('nearest' for sharp pixels, 'bilinear' for smooth)
+- **preserve_palette** (bool): When True with nearest interpolation, preserves exact original colors
 
 ### UpscalePostProcessor
 

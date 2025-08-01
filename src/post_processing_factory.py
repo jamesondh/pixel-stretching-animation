@@ -47,7 +47,9 @@ class PostProcessorFactory:
                 edge_behavior=config.get('edge_behavior', 'wrap'),
                 amplitude_curve=config.get('amplitude_curve', 'constant'),
                 start_amplitude=config.get('start_amplitude'),
-                end_amplitude=config.get('end_amplitude')
+                end_amplitude=config.get('end_amplitude'),
+                interpolation=config.get('interpolation', 'bilinear'),
+                preserve_palette=config.get('preserve_palette', False)
             )
         else:
             raise ValueError(f"Unknown post-processor type: {processor_type}")

@@ -47,6 +47,8 @@ post_processing:
       amplitude_curve: ease_in_out
       start_amplitude: 0.0
       end_amplitude: 0.01
+      interpolation: nearest # Use nearest for sharp pixels, bilinear for smooth
+      preserve_palette: true # Preserve original colors (no blur)
 
     # Upscale the result
     - type: upscale

@@ -113,6 +113,75 @@ class DisplacementCalculator:
         return result
     
     @staticmethod
+    def apply_displacement_nearest_true(
+        image: np.ndarray,
+        dx: np.ndarray,
+        dy: np.ndarray,
+        mode: Literal['translate', 'scale', 'both'] = 'translate',
+        edge_behavior: Literal['wrap', 'clamp'] = 'clamp'
+    ) -> np.ndarray:
+        """
+        Apply displacement field to an image using true nearest neighbor.
+        This method preserves the original color palette by using integer coordinates.
+        
+        Args:
+            image: Input image
+            dx: X displacement field
+            dy: Y displacement field
+            mode: Displacement mode
+            edge_behavior: How to handle edges ('wrap' or 'clamp')
+            
+        Returns:
+            Displaced image with original colors preserved
+        """
+        height, width = image.shape[:2]
+        
+        # Create coordinate grids
+        x, y = np.meshgrid(np.arange(width), np.arange(height))
+        
+        if mode == 'translate':
+            # Simple translation displacement
+            new_x = x + dx
+            new_y = y + dy
+        elif mode == 'scale':
+            # Scale-based displacement
+            scale_x = 1 + dx / width
+            scale_y = 1 + dy / height
+            new_x = x * scale_x
+            new_y = y * scale_y
+        elif mode == 'both':
+            # Combination of translation and scaling
+            scale_factor = 0.5
+            new_x = x + dx * scale_factor + x * (dx / width) * (1 - scale_factor)
+            new_y = y + dy * scale_factor + y * (dy / height) * (1 - scale_factor)
+        else:
+            raise ValueError(f"Unknown displacement mode: {mode}")
+        
+        # Round to nearest integer coordinates
+        new_x = np.round(new_x).astype(int)
+        new_y = np.round(new_y).astype(int)
+        
+        # Handle boundaries based on edge behavior
+        if edge_behavior == 'wrap':
+            # Wrap around edges
+            new_x = new_x % width
+            new_y = new_y % height
+        else:  # 'clamp'
+            # Clamp to boundaries
+            new_x = np.clip(new_x, 0, width - 1)
+            new_y = np.clip(new_y, 0, height - 1)
+        
+        # Create output image
+        if len(image.shape) == 3:
+            # Color image
+            result = image[new_y, new_x]
+        else:
+            # Grayscale image
+            result = image[new_y, new_x]
+        
+        return result
+    
+    @staticmethod
     def apply_column_displacement(
         column: np.ndarray,
         displacement: np.ndarray,

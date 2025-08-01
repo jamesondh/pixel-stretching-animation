@@ -146,7 +146,9 @@ class SineWavePostProcessor(PostProcessor):
                  edge_behavior: Literal['wrap', 'clamp', 'fade', 'mirror'] = 'wrap',
                  amplitude_curve: Literal['constant', 'linear', 'ease_in', 'ease_out', 'ease_in_out'] = 'constant',
                  start_amplitude: Optional[float] = None,
-                 end_amplitude: Optional[float] = None):
+                 end_amplitude: Optional[float] = None,
+                 interpolation: Literal['nearest', 'bilinear'] = 'bilinear',
+                 preserve_palette: bool = False):
         """
         Initialize sine wave post-processor.
         
@@ -162,6 +164,8 @@ class SineWavePostProcessor(PostProcessor):
             amplitude_curve: How amplitude changes over time
             start_amplitude: Starting amplitude (defaults to amplitude)
             end_amplitude: Ending amplitude (defaults to amplitude)
+            interpolation: Interpolation method ('nearest' for sharp pixels, 'bilinear' for smooth)
+            preserve_palette: When True with nearest interpolation, preserves exact original colors
         """
         # Handle axis/angle specification
         if angle is not None:
@@ -185,6 +189,8 @@ class SineWavePostProcessor(PostProcessor):
         self.amplitude_curve = amplitude_curve
         self.start_amplitude = start_amplitude if start_amplitude is not None else amplitude
         self.end_amplitude = end_amplitude if end_amplitude is not None else amplitude
+        self.interpolation = interpolation
+        self.preserve_palette = preserve_palette
         
         # Store original amplitude for curve calculations
         self.base_amplitude = amplitude
@@ -235,11 +241,23 @@ class SineWavePostProcessor(PostProcessor):
         )
         
         # Apply displacement using shared calculator
-        result = DisplacementCalculator.apply_displacement(
-            frame, -dx, -dy,  # Negative because we calculated source coords
-            mode=self.displacement_mode,
-            order=1  # Bilinear interpolation
-        )
+        if self.preserve_palette and self.interpolation == 'nearest':
+            # Use true nearest neighbor to preserve original colors
+            # Only support wrap and clamp for true nearest neighbor
+            edge_behavior_nn = 'wrap' if self.edge_behavior == 'wrap' else 'clamp'
+            result = DisplacementCalculator.apply_displacement_nearest_true(
+                frame, -dx, -dy,  # Negative because we calculated source coords
+                mode=self.displacement_mode,
+                edge_behavior=edge_behavior_nn
+            )
+        else:
+            # Use standard interpolation
+            interpolation_order = 0 if self.interpolation == 'nearest' else 1
+            result = DisplacementCalculator.apply_displacement(
+                frame, -dx, -dy,  # Negative because we calculated source coords
+                mode=self.displacement_mode,
+                order=interpolation_order
+            )
         
         # Apply alpha mask if using fade
         if self.edge_behavior == 'fade' and alpha_mask is not None:

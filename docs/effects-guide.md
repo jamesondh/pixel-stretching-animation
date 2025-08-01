@@ -654,6 +654,14 @@ The sine wave post-processor displaces pixels based on a sine wave pattern. Unli
   - `fade`: Smooth fade at boundaries
   - `mirror`: Reflect at edges
 
+- **interpolation** (string): Pixel sampling method
+  - `nearest`: Sharp pixels, no blur (best for pixel art)
+  - `bilinear`: Smooth transitions (default, can cause blur)
+
+- **preserve_palette** (boolean): Color preservation mode
+  - `true`: With nearest interpolation, preserves exact original colors
+  - `false`: Standard interpolation (default)
+
 - **amplitude_curve**: How amplitude changes over time
   - `constant`: Same amplitude throughout
   - `linear`: Linear increase
@@ -715,6 +723,21 @@ post_processing:
       amplitude_curve: ease_in_out
       start_amplitude: 0.0
       end_amplitude: 0.08
+```
+
+#### Example: Sharp Pixel Art Distortion
+```yaml
+# For pixel art or when you want to avoid blur
+post_processing:
+  enabled: true
+  processors:
+    - type: sine_wave
+      axis: horizontal
+      frequency: 4.0
+      amplitude: 0.01
+      interpolation: nearest  # Preserves sharp pixels
+      preserve_palette: true  # No color bleeding
+      edge_behavior: wrap
 ```
 
 #### Creative Applications
@@ -792,7 +815,9 @@ post_processing:
 2. **Layer Effects**: Chain multiple subtle effects rather than one strong effect
 3. **Consider Content**: Match wave frequency to image features
 4. **Edge Behavior**: Use `wrap` for seamless loops, `fade` for natural boundaries
-5. **Performance**: Post-processing adds rendering time, especially with upscaling
+5. **Interpolation**: Use `nearest` for pixel art to avoid blur, `bilinear` for smooth photos
+6. **Palette Preservation**: Enable `preserve_palette` with `nearest` interpolation for true pixel-perfect results
+7. **Performance**: Post-processing adds rendering time, especially with upscaling
 
 ### Combining Generation and Post-Processing
 
