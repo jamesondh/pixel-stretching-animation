@@ -8,6 +8,7 @@ import imageio
 from typing import Union, List, Optional, Callable
 from pathlib import Path
 from abc import ABC, abstractmethod
+from .post_processors import PostProcessor
 
 
 class FrameGenerator(ABC):
@@ -122,8 +123,21 @@ class AnimationEngine:
     
     def create_animation(self, input_path: Union[str, Path], output_path: Union[str, Path],
                         warp_func: Callable, frames: int = 60, fps: int = 30,
-                        post_process: Optional[Callable] = None) -> None:
-        """Create complete animation from input image."""
+                        post_process: Optional[Union[Callable, PostProcessor]] = None,
+                        codec: str = 'libx264', quality: Optional[int] = None) -> None:
+        """
+        Create complete animation from input image.
+        
+        Args:
+            input_path: Path to input image
+            output_path: Path to output video
+            warp_func: Function to warp frames
+            frames: Number of frames to generate
+            fps: Frames per second
+            post_process: Optional post-processor (callable or PostProcessor instance)
+            codec: Video codec to use
+            quality: Video quality (codec-specific)
+        """
         # Load image
         base_image = self.load_image(input_path)
         
@@ -132,10 +146,18 @@ class AnimationEngine:
         
         # Apply post-processing if provided
         if post_process:
-            frame_list = [post_process(frame) for frame in frame_list]
+            if isinstance(post_process, PostProcessor):
+                # Use PostProcessor interface
+                frame_list = [
+                    post_process.process_frame(frame, i, frames)
+                    for i, frame in enumerate(frame_list)
+                ]
+            else:
+                # Legacy callable support
+                frame_list = [post_process(frame) for frame in frame_list]
         
         # Save animation
-        self.save_animation(frame_list, output_path, fps)
+        self.save_animation(frame_list, output_path, fps, codec, quality)
 
 
 class AnimationSequence:

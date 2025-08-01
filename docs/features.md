@@ -95,9 +95,10 @@ Control how the distortion progresses over time with different curve types.
 - **Nearest Neighbor**: Preserves hard pixel edges (best for pixel art)
 - **Bilinear**: Smooth transitions between pixels (better for photos)
 
-#### Upscaling
+#### Upscaling (Now part of Post-Processing)
 - Integer scaling (2x, 3x, 4x, etc.)
-- Uses nearest neighbor to maintain pixel integrity
+- Available as a post-processor for flexible pipeline placement
+- Supports both nearest and bilinear interpolation
 - Perfect for low-resolution pixel art
 
 #### Temporal Smoothing
@@ -112,7 +113,57 @@ Supported video formats:
 - **AVI**: Uncompressed option for maximum quality
 - **MOV**: QuickTime format for Mac ecosystems
 
-### 6. Advanced Features
+### 6. Post-Processing System
+
+The post-processing system allows you to apply additional effects after the main animation generation. This separation enables:
+- Processing existing video files
+- Chaining multiple effects
+- Non-destructive workflows
+
+#### Sine Wave Post-Processor
+Applies sinusoidal displacement to frames for ripple and wave effects.
+
+**Parameters:**
+- `axis`: Direction of the wave (vertical, horizontal, diagonal, or angle in degrees)
+- `frequency`: Number of wave cycles across the image
+- `amplitude`: Displacement strength (0-1, relative to image size)
+- `phase`: Initial phase offset
+- `speed`: Animation speed for moving waves
+- `displacement_mode`: How pixels are displaced (translate, scale, or both)
+- `edge_behavior`: How to handle pixels at edges (wrap, clamp, fade, mirror)
+- `amplitude_curve`: How amplitude changes over time (constant, linear, ease_in, ease_out, ease_in_out)
+- `start_amplitude` / `end_amplitude`: Amplitude animation range
+
+**Use cases:**
+- Water ripple effects
+- Heat distortion
+- Dream-like sequences
+- Glitch effects
+
+#### Upscale Post-Processor
+Scales up video resolution with configurable interpolation.
+
+**Parameters:**
+- `scale_factor`: Integer scaling (2, 3, 4, etc.)
+- `method`: Interpolation method (nearest or bilinear)
+
+#### Post-Processor Chaining
+Multiple post-processors can be chained together in sequence:
+```yaml
+post_processing:
+  enabled: true
+  processors:
+    - type: sine_wave
+      axis: horizontal
+      frequency: 3.0
+    - type: sine_wave
+      axis: vertical
+      frequency: 2.0
+    - type: upscale
+      scale_factor: 2
+```
+
+### 7. Advanced Features
 
 #### Composite Effects
 Combine multiple distortion effects with configurable weights.
@@ -130,15 +181,39 @@ Pre-configured settings for common use cases:
 #### Batch Processing
 Process multiple images with the same settings (via scripting).
 
+#### Video Processing
+Process existing videos without regeneration using the `process-video` command.
+
+### 8. Shared Transform Architecture
+
+The codebase uses a unified transform system that allows effects to be shared between generation and post-processing phases:
+
+#### Shared Transform Utilities
+- **SineWaveTransform**: Mathematical sine wave calculations
+- **DisplacementCalculator**: Apply displacement fields to images
+- **EdgeHandler**: Consistent edge behavior across all effects
+
+#### Benefits
+- Code reuse between distortion effects and post-processors
+- Consistent behavior across different processing phases
+- Easier to add new effects that work in both contexts
+- Optimized algorithms used everywhere
+
+#### Example: Sine Wave
+The sine wave effect exists in both forms:
+- **SineWaveDistortionEffect**: Applied during generation (column-by-column)
+- **SineWavePostProcessor**: Applied after generation (full frames)
+- Both use the same `SineWaveTransform` for calculations
+
 ## Feature Comparison
 
-| Feature | Pivot | Wave | Bias | Composite |
-|---------|-------|------|------|-----------|
-| Directional Control | Limited | Medium | High | Variable |
-| Smoothness | Medium | High | Medium | Variable |
-| Predictability | High | Medium | High | Low |
-| CPU Usage | Low | Medium | Low | High |
-| Best For | Pixel Art | Organic | Melting | Complex |
+| Feature | Pivot | Wave | Bias | Sine Wave | Composite |
+|---------|-------|------|------|-----------|-----------|
+| Directional Control | Limited | Medium | High | High | Variable |
+| Smoothness | Medium | High | Medium | Very High | Variable |
+| Predictability | High | Medium | High | Very High | Low |
+| CPU Usage | Low | Medium | Low | Low | High |
+| Best For | Pixel Art | Organic | Melting | Precise | Complex |
 
 ## Performance Considerations
 

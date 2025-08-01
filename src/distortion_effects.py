@@ -2,6 +2,7 @@ import numpy as np
 from typing import Optional, Literal, Union
 from abc import ABC, abstractmethod
 from scipy.ndimage import rotate
+from .transforms import SineWaveTransform, DisplacementCalculator
 
 
 class DistortionEffect(ABC):
@@ -357,3 +358,83 @@ class FlowingMeltEffect(DistortionEffect):
         
         return column[source_rows]
     
+
+class SineWaveDistortionEffect(DistortionEffect):
+    """
+    Sine wave distortion effect using shared transform utilities.
+    This creates wave-like distortions during the generation phase.
+    """
+    
+    def __init__(self, 
+                 max_stretch: float = 0.5,
+                 frequency: float = 2.0,
+                 amplitude: float = 0.15,
+                 phase: float = 0.0,
+                 speed: float = 0.2,
+                 axis: Union[str, float] = 'vertical',
+                 seed: Optional[int] = None):
+        """
+        Initialize sine wave distortion effect.
+        
+        Args:
+            max_stretch: Maximum stretch factor (0-1)
+            frequency: Number of wave cycles
+            amplitude: Wave amplitude relative to max_stretch
+            phase: Initial phase offset in radians
+            speed: Animation speed for wave movement
+            axis: Wave direction ('vertical', 'horizontal', 'diagonal', or angle)
+            seed: Random seed (unused but kept for compatibility)
+        """
+        self.max_stretch = max_stretch
+        self.rng = np.random.RandomState(seed)
+        
+        # Initialize shared sine wave transform
+        self.transform = SineWaveTransform(
+            frequency=frequency,
+            amplitude=amplitude,
+            phase=phase,
+            speed=speed,
+            axis=axis
+        )
+    
+    def generate_factors(self, width: int, frame: int = 0, total_frames: int = 60) -> np.ndarray:
+        """Generate sine wave modulated stretch factors for each column."""
+        # Calculate time factor for animation
+        time_factor = frame / max(total_frames - 1, 1) if total_frames > 1 else 0.0
+        
+        # Generate factors for each column
+        factors = np.zeros(width)
+        
+        for col in range(width):
+            # Calculate displacement for this column at middle height
+            displacement = self.transform.calculate_column_displacement(
+                col, height=100, width=width, time=time_factor
+            )
+            
+            # Convert displacement to stretch factor
+            # Use the average displacement as the factor
+            factors[col] = np.mean(np.abs(displacement)) / 100
+        
+        return factors * self.max_stretch
+    
+    def warp_column(self, column: np.ndarray, factor: float, column_index: int,
+                   total_width: int, height: int) -> np.ndarray:
+        """Apply sine wave warping to a column."""
+        # For column-based warping, we can apply vertical displacement
+        # based on the sine wave pattern
+        
+        # Generate displacement for this specific column
+        time_factor = 0.0  # This is handled in generate_factors
+        displacement = self.transform.calculate_column_displacement(
+            column_index, height, total_width, time_factor
+        )
+        
+        # Scale displacement by the factor
+        displacement *= factor
+        
+        # Apply displacement to column
+        warped = DisplacementCalculator.apply_column_displacement(
+            column, displacement, interpolation='bilinear'
+        )
+        
+        return warped

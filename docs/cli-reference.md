@@ -34,7 +34,7 @@ pixel-stretch animate INPUT_PATH OUTPUT_PATH [OPTIONS]
 - `--seed INTEGER`: Random seed for reproducibility
 
 **Effect Options:**
-- `--effect [pivot|wave|bias|flowing_melt]`: Effect type to use (default: pivot)
+- `--effect [pivot|wave|bias|flowing_melt|sine_wave]`: Effect type to use (default: pivot)
 - `--pivot [center|top|bottom]`: Pivot point for stretching (default: center)
 - `--stretch-bias, -b FLOAT`: Bias stretching direction -1 to 1 (default: 0.0)
 
@@ -53,8 +53,15 @@ pixel-stretch animate INPUT_PATH OUTPUT_PATH [OPTIONS]
 **Rendering Options:**
 - `--interpolation [nearest|bilinear]`: Interpolation method (default: nearest)
 - `--temporal-smoothing, -t FLOAT`: Temporal smoothing factor 0-1 (default: 0.0)
-- `--upscale, -u INTEGER`: Upscale factor (default: 1)
+- `--upscale, -u INTEGER`: Upscale factor (deprecated - use post-processing) (default: 1)
 - `--cumulative, -C`: Apply distortion cumulatively to each frame
+
+**Post-Processing Options:**
+- `--post-process, -P STRING`: Apply post-processing effect (can be used multiple times)
+- `--pp-sine-axis STRING`: Sine wave axis: vertical, horizontal, diagonal, or angle (default: vertical)
+- `--pp-sine-frequency FLOAT`: Sine wave frequency (default: 3.0)
+- `--pp-sine-amplitude FLOAT`: Sine wave amplitude 0-1 (default: 0.05)
+- `--pp-sine-speed FLOAT`: Sine wave animation speed (default: 0.5)
 
 **Configuration Options:**
 - `--preset, -p [pixel_art|smooth_wave|melting|bouncy]`: Use a preset configuration
@@ -117,6 +124,16 @@ Diagonal wave effect at 45 degrees:
 pixel-stretch animate input.png output.mp4 --effect wave --axis 45 --wave-amplitude 0.15
 ```
 
+With post-processing sine wave:
+```bash
+pixel-stretch animate input.png output.mp4 --post-process sine_wave --pp-sine-frequency 4.0
+```
+
+Chain post-processing with upscaling:
+```bash
+pixel-stretch animate input.png output.mp4 --post-process sine_wave --upscale 2
+```
+
 ### effects
 
 List available effects and their parameters.
@@ -141,6 +158,9 @@ Available effects:
   flowing_melt: 2D displacement effect with vertical melting and horizontal wave drift
     Parameters: max_stretch, melt_bias (0 to 1), flow_amplitude, flow_frequency, 
                 flow_speed, flow_variation, edge_behavior (wrap/clamp/fade)
+
+  sine_wave: Smooth sine wave distortion using shared transform utilities
+    Parameters: max_stretch, frequency, amplitude, phase, speed, axis
 
 Axis options:
   All effects can be applied along different axes using the --axis parameter:
@@ -223,6 +243,58 @@ Create JSON config:
 pixel-stretch create-config my_config.json --format json
 ```
 
+### process-video
+
+Apply post-processing effects to an existing video.
+
+```bash
+pixel-stretch process-video INPUT_VIDEO OUTPUT_VIDEO [OPTIONS]
+```
+
+#### Arguments
+- **INPUT_VIDEO**: Path to the input video
+- **OUTPUT_VIDEO**: Path for the output video
+
+#### Options
+
+**Post-Processing Options:**
+- `--config, -c PATH`: Load post-processing configuration from file
+- `--post-process, -P STRING`: Apply post-processing effect (can be used multiple times)
+- `--pp-sine-axis STRING`: Sine wave axis: vertical, horizontal, diagonal, or angle (default: vertical)
+- `--pp-sine-frequency FLOAT`: Sine wave frequency (default: 3.0)
+- `--pp-sine-amplitude FLOAT`: Sine wave amplitude 0-1 (default: 0.05)
+- `--pp-sine-speed FLOAT`: Sine wave animation speed (default: 0.5)
+- `--pp-sine-mode [translate|scale|both]`: Sine wave displacement mode (default: translate)
+- `--pp-sine-edge [wrap|clamp|fade|mirror]`: Edge behavior for sine wave (default: wrap)
+- `--upscale, -u INTEGER`: Upscale factor for video (default: 1)
+
+**Output Options:**
+- `--fps INTEGER`: Output FPS (defaults to input FPS)
+- `--codec STRING`: Video codec to use (default: libx264)
+- `--quality INTEGER`: Video quality (codec-specific)
+
+#### Examples
+
+Apply sine wave to existing video:
+```bash
+pixel-stretch process-video input.mp4 output.mp4 --post-process sine_wave --pp-sine-frequency 4.0
+```
+
+Chain multiple post-processors:
+```bash
+pixel-stretch process-video input.mp4 output.mp4 --post-process sine_wave --pp-sine-axis horizontal --post-process sine_wave --pp-sine-axis vertical --upscale 2
+```
+
+Use configuration file:
+```bash
+pixel-stretch process-video input.mp4 output.mp4 --config post_processing_config.yaml
+```
+
+Complex sine wave with custom parameters:
+```bash
+pixel-stretch process-video input.mp4 output.mp4 --post-process sine_wave --pp-sine-frequency 5.0 --pp-sine-amplitude 0.08 --pp-sine-speed -0.3 --pp-sine-mode both --pp-sine-edge mirror
+```
+
 ### preview
 
 Generate a quick preview of an effect.
@@ -270,8 +342,20 @@ animation:
   fps: 30
   interpolation: bilinear
   temporal_smoothing: 0.7
-  upscale: 2
+  upscale: 1  # Upscaling now handled in post-processing
   cumulative: false
+
+# Post-processing pipeline
+post_processing:
+  enabled: true
+  processors:
+    - type: sine_wave
+      axis: horizontal
+      frequency: 3.0
+      amplitude: 0.05
+      speed: 0.5
+    - type: upscale
+      scale_factor: 2
 
 output:
   format: mp4

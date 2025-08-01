@@ -1,0 +1,64 @@
+# Example configuration demonstrating post-processing effects
+# This configuration combines pixel stretching animation with post-processing
+
+# Primary distortion effect - flowing melt
+effect:
+  type: flowing_melt
+  max_stretch: 0.5
+  melt_bias: 0.2
+  flow_amplitude: 0.15
+  flow_frequency: 3.0
+  flow_speed: 0.4
+  flow_variation: 0.3
+  edge_behavior: wrap
+  stretch_curve: ease_in_out
+  seed: 42
+
+# Animation settings
+animation:
+  frames: 90
+  fps: 30
+  interpolation: bilinear
+  temporal_smoothing: 0.3
+  upscale: 1  # Upscaling moved to post-processing
+  cumulative: false
+  frame_generator: standard
+
+# Post-processing pipeline
+post_processing:
+  enabled: true
+  processors:
+    # First apply a sine wave distortion
+    - type: sine_wave
+      axis: horizontal
+      frequency: 4.0
+      amplitude: 0.03
+      phase: 0.0
+      speed: 0.3
+      displacement_mode: translate
+      edge_behavior: wrap
+      amplitude_curve: ease_in_out
+      start_amplitude: 0.0
+      end_amplitude: 0.06
+    
+    # Then apply vertical sine wave for a ripple effect
+    - type: sine_wave
+      axis: vertical
+      frequency: 2.5
+      amplitude: 0.02
+      phase: 1.57  # PI/2 phase shift
+      speed: -0.2  # Negative speed for opposite direction
+      displacement_mode: scale
+      edge_behavior: mirror
+      amplitude_curve: constant
+    
+    # Finally upscale the result
+    - type: upscale
+      scale_factor: 2
+      method: nearest  # Use nearest for pixel art style
+
+# Output settings
+output:
+  format: mp4
+  codec: libx264
+  quality: 8

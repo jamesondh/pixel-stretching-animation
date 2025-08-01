@@ -8,8 +8,14 @@ A modular Python library for creating mesmerizing pixel-stretching animations fr
   - Pivot-based stretching (original effect)
   - Wave distortion with animated phase
   - Directional bias (melting/floating effects)
+  - Sine wave effect (shared with post-processing)
   - Composite effects (combine multiple distortions)
   - Horizontal and arbitrary angle stretching
+- **Post-processing system**:
+  - Apply effects to existing videos
+  - Sine wave distortion with configurable parameters
+  - Chainable post-processors
+  - Integrated upscaling (2x, 4x, etc.)
 - **Advanced animation modes**:
   - Standard (increasing distortion)
   - Cumulative (building on previous frames)
@@ -20,6 +26,7 @@ A modular Python library for creating mesmerizing pixel-stretching animations fr
   - Temporal smoothing for fluid motion
 - **Modern architecture**:
   - Modular effect system
+  - Shared transform utilities (used by both effects and post-processors)
   - Configuration file support (YAML/JSON)
   - Feature registry for extensibility
   - Comprehensive CLI with subcommands
@@ -65,6 +72,12 @@ pixel-stretch animate input.png output.mp4 --effect wave --axis 45
 # Using configuration file
 pixel-stretch animate input.png output.mp4 --config configs/example_wave.yaml
 
+# Post-processing: Apply sine wave to existing video
+pixel-stretch process-video input.mp4 output.mp4 --post-process sine_wave --pp-sine-frequency 4.0
+
+# Chain multiple post-processors
+pixel-stretch process-video input.mp4 output.mp4 --post-process sine_wave --upscale 2
+
 # List available effects and presets
 pixel-stretch effects
 pixel-stretch presets
@@ -106,7 +119,19 @@ animation:
   frames: 60
   fps: 30
   temporal_smoothing: 0.7
-  upscale: 2
+  upscale: 1  # Upscaling now handled in post-processing
+
+# Post-processing pipeline
+post_processing:
+  enabled: true
+  processors:
+    - type: sine_wave
+      axis: horizontal
+      frequency: 3.0
+      amplitude: 0.05
+      speed: 0.5
+    - type: upscale
+      scale_factor: 2
 ```
 
 ```bash
@@ -124,6 +149,7 @@ The `examples/` directory contains demonstration scripts:
 - `upscale_demo.py`: Upscaling demonstrations
 - `stretch_curves_demo.py`: Demonstrates timing curves for composite effects
 - `constant_stretch_demo.py`: Shows constant stretch behavior
+- `shared_transforms_demo.py`: Shows shared transform architecture
 
 Run the comprehensive demo:
 
@@ -147,16 +173,23 @@ Detailed documentation is available in the `docs/` directory:
 ```
 pixel-stretching-animation/
 ├── src/
-│   ├── pixel_stretcher.py      # Main animation class
-│   ├── distortion_effects.py   # Modular effect system
-│   ├── animation.py            # Animation engine
-│   ├── config.py               # Configuration management
-│   ├── cli.py                  # CLI with subcommands
-│   └── registry.py             # Feature registry
-├── docs/                       # Comprehensive documentation
-├── configs/                    # Example configuration files
-├── examples/                   # Usage examples
-└── tests/                      # Unit tests
+│   ├── pixel_stretcher.py         # Main animation class
+│   ├── distortion_effects.py      # Modular effect system
+│   ├── post_processors.py         # Post-processing effects
+│   ├── transforms/                # Shared transform utilities
+│   │   ├── sine_wave.py          # Sine wave transformations
+│   │   ├── displacement.py       # Displacement calculations
+│   │   └── edge_handling.py      # Edge behavior handling
+│   ├── video_processor.py         # Video processing utilities
+│   ├── post_processing_factory.py # Post-processor factory
+│   ├── animation.py               # Animation engine
+│   ├── config.py                  # Configuration management
+│   ├── cli.py                     # CLI with subcommands
+│   └── registry.py                # Feature registry
+├── docs/                          # Comprehensive documentation
+├── configs/                       # Example configuration files
+├── examples/                      # Usage examples
+└── tests/                         # Unit tests
 ```
 
 ## Available Presets

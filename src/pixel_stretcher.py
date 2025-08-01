@@ -8,6 +8,8 @@ from .distortion_effects import (
     HorizontalStretchEffect, RotatedStretchEffect, FlowingMeltEffect
 )
 from scipy.ndimage import rotate
+from .post_processors import PostProcessor
+from .post_processing_factory import PostProcessorFactory
 
 
 class PixelStretcher:
@@ -405,9 +407,24 @@ class PixelStretcher:
         output_path: Union[str, Path],
         frames: int = 60,
         fps: int = 30,
-        loop: int = 0
+        loop: int = 0,
+        post_processor: Optional[PostProcessor] = None,
+        codec: str = 'libx264',
+        quality: Optional[int] = None
     ) -> None:
-        """Create animation from input image."""
+        """
+        Create animation from input image.
+        
+        Args:
+            input_path: Path to input image
+            output_path: Path to output video
+            frames: Number of frames to generate
+            fps: Frames per second
+            loop: Number of loops (0 = infinite for GIF)
+            post_processor: Optional post-processor to apply
+            codec: Video codec to use
+            quality: Video quality (codec-specific)
+        """
         input_path = Path(input_path)
         output_path = Path(output_path)
         
@@ -476,9 +493,49 @@ class PixelStretcher:
                     
                     frame_list.append(warped_frame)
         
+        # Apply post-processing if provided
+        if post_processor:
+            frame_list = [
+                post_processor.process_frame(frame, i, frames)
+                for i, frame in enumerate(frame_list)
+            ]
+        
         # Save animation
-        imageio.mimsave(output_path, frame_list, fps=fps)
+        save_kwargs = {'fps': fps}
+        if output_path.suffix.lower() == '.mp4':
+            save_kwargs['codec'] = codec
+            if quality:
+                save_kwargs['quality'] = quality
+        elif output_path.suffix.lower() == '.gif' and loop != 0:
+            save_kwargs['loop'] = loop
+        
+        imageio.mimsave(output_path, frame_list, **save_kwargs)
     
     def reset(self) -> None:
         """Reset temporal state."""
         self._previous_factors = None
+    
+    @classmethod
+    def from_config(cls, config: dict, effect: Optional[DistortionEffect] = None) -> 'PixelStretcher':
+        """
+        Create PixelStretcher from configuration dictionary.
+        
+        Args:
+            config: Configuration dictionary
+            effect: Optional effect instance (overrides config)
+            
+        Returns:
+            PixelStretcher instance
+        """
+        animation_config = config.get('animation', {})
+        
+        return cls(
+            effect=effect,
+            interpolation=animation_config.get('interpolation', 'nearest'),
+            temporal_smoothing=animation_config.get('temporal_smoothing', 0.0),
+            upscale=animation_config.get('upscale', 1),
+            cumulative=animation_config.get('cumulative', False),
+            stretch_curve=config.get('effect', {}).get('stretch_curve', 'linear'),
+            start_stretch=config.get('effect', {}).get('start_stretch'),
+            end_stretch=config.get('effect', {}).get('end_stretch')
+        )

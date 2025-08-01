@@ -49,7 +49,7 @@ class EffectConfig:
     
     def validate(self):
         """Validate effect configuration."""
-        if self.type not in ['pivot', 'wave', 'bias', 'composite', 'flowing_melt']:
+        if self.type not in ['pivot', 'wave', 'bias', 'composite', 'flowing_melt', 'sine_wave']:
             raise ValueError(f"Invalid effect type: {self.type}")
         
         if not 0 <= self.max_stretch <= 1:
@@ -130,6 +130,50 @@ class AnimationConfig:
 
 
 @dataclass
+class PostProcessingConfig:
+    """Configuration for post-processing effects."""
+    enabled: bool = False
+    processors: List[Dict[str, Any]] = field(default_factory=list)
+    
+    def validate(self):
+        """Validate post-processing configuration."""
+        for i, proc in enumerate(self.processors):
+            if 'type' not in proc:
+                raise ValueError(f"Post-processor {i} must have a 'type' field")
+            
+            # Validate specific processor types
+            proc_type = proc['type']
+            if proc_type == 'upscale':
+                scale_factor = proc.get('scale_factor', 2)
+                if not isinstance(scale_factor, int) or scale_factor < 1:
+                    raise ValueError(f"Upscale scale_factor must be an integer >= 1")
+                
+                method = proc.get('method', 'nearest')
+                if method not in ['nearest', 'bilinear', 'cubic']:
+                    raise ValueError(f"Invalid upscale method: {method}")
+            
+            elif proc_type == 'sine_wave':
+                axis = proc.get('axis', 'vertical')
+                if axis not in ['vertical', 'horizontal', 'diagonal', 'angle']:
+                    raise ValueError(f"Invalid sine_wave axis: {axis}")
+                
+                if axis == 'angle' and 'angle' not in proc:
+                    raise ValueError("sine_wave with axis='angle' requires 'angle' parameter")
+                
+                displacement_mode = proc.get('displacement_mode', 'translate')
+                if displacement_mode not in ['translate', 'scale', 'both']:
+                    raise ValueError(f"Invalid displacement_mode: {displacement_mode}")
+                
+                edge_behavior = proc.get('edge_behavior', 'wrap')
+                if edge_behavior not in ['wrap', 'clamp', 'fade', 'mirror']:
+                    raise ValueError(f"Invalid edge_behavior: {edge_behavior}")
+                
+                amplitude_curve = proc.get('amplitude_curve', 'constant')
+                if amplitude_curve not in ['constant', 'linear', 'ease_in', 'ease_out', 'ease_in_out']:
+                    raise ValueError(f"Invalid amplitude_curve: {amplitude_curve}")
+
+
+@dataclass
 class OutputConfig:
     """Configuration for output parameters."""
     format: str = 'mp4'  # 'mp4', 'avi', 'mov'
@@ -147,12 +191,14 @@ class PixelStretchConfig:
     """Complete configuration for pixel stretching."""
     effect: EffectConfig = field(default_factory=EffectConfig)
     animation: AnimationConfig = field(default_factory=AnimationConfig)
+    post_processing: PostProcessingConfig = field(default_factory=PostProcessingConfig)
     output: OutputConfig = field(default_factory=OutputConfig)
     
     def validate(self):
         """Validate all configuration sections."""
         self.effect.validate()
         self.animation.validate()
+        self.post_processing.validate()
         self.output.validate()
     
     @classmethod
@@ -160,11 +206,13 @@ class PixelStretchConfig:
         """Create configuration from dictionary."""
         effect_dict = config_dict.get('effect', {})
         animation_dict = config_dict.get('animation', {})
+        post_processing_dict = config_dict.get('post_processing', {})
         output_dict = config_dict.get('output', {})
         
         return cls(
             effect=EffectConfig(**effect_dict),
             animation=AnimationConfig(**animation_dict),
+            post_processing=PostProcessingConfig(**post_processing_dict),
             output=OutputConfig(**output_dict)
         )
     
@@ -183,7 +231,7 @@ class PixelStretchConfig:
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary."""
-        return {
+        result = {
             'effect': {
                 k: v for k, v in self.effect.__dict__.items() 
                 if v is not None
@@ -194,6 +242,15 @@ class PixelStretchConfig:
                 if v is not None
             }
         }
+        
+        # Only include post_processing if enabled
+        if self.post_processing.enabled:
+            result['post_processing'] = {
+                'enabled': True,
+                'processors': self.post_processing.processors
+            }
+        
+        return result
     
     def save(self, config_path: Union[str, Path]):
         """Save configuration to file."""

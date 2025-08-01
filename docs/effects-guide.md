@@ -8,9 +8,11 @@ This guide provides detailed information about each distortion effect, including
 2. [Wave Effect](#wave-effect)
 3. [Bias Effect](#bias-effect)
 4. [Flowing Melt Effect](#flowing-melt-effect)
-5. [Composite Effects](#composite-effects)
-6. [Effect Combinations](#effect-combinations)
-7. [Axis Control](#axis-control)
+5. [Sine Wave Effect](#sine-wave-effect)
+6. [Composite Effects](#composite-effects)
+7. [Effect Combinations](#effect-combinations)
+8. [Axis Control](#axis-control)
+9. [Post-Processing Effects](#post-processing-effects)
 
 ## Pivot Effect
 
@@ -300,6 +302,90 @@ See the included example configurations:
 - `configs/example_flowing_melt.yaml`: Balanced flowing melt effect
 - `configs/example_flowing_melt_dramatic.yaml`: Strong flow with fade edges
 
+## Sine Wave Effect
+
+Modern sine wave distortion effect that shares transformation logic with the post-processing system.
+
+### How It Works
+
+The sine wave effect uses the same mathematical transformations as the sine wave post-processor but applies them during the generation phase. This allows for column-by-column distortion with smooth sine wave patterns.
+
+### Parameters
+
+- **max_stretch** (0-1): Overall intensity multiplier
+- **frequency** (float): Number of wave cycles
+  - 1-2: Long, smooth waves
+  - 3-5: Medium frequency
+  - 6+: Rapid oscillation
+
+- **amplitude** (0-1): Wave height relative to max_stretch
+  - 0.05-0.1: Subtle waves
+  - 0.15-0.3: Moderate waves
+  - 0.4+: Strong waves
+
+- **phase** (float): Initial phase offset (radians)
+- **speed** (float): Animation speed
+  - 0.1-0.3: Slow movement
+  - 0.5-1.0: Normal speed
+  - 1.5+: Fast movement
+
+- **axis** (string/float): Wave direction
+  - `vertical`: Default up/down waves
+  - `horizontal`: Left/right waves
+  - `diagonal`: 45-degree waves
+  - Any angle in degrees
+
+### Visual Characteristics
+
+- Smooth, mathematical precision
+- Consistent wave patterns
+- Shares behavior with post-processing
+- Efficient column-based processing
+
+### Best Practices
+
+```bash
+# Basic sine wave distortion
+pixel-stretch animate input.png output.mp4 \
+  --effect sine_wave \
+  --max-stretch 0.4 \
+  --wave-frequency 3
+
+# Horizontal sine waves
+pixel-stretch animate input.png output.mp4 \
+  --effect sine_wave \
+  --axis horizontal \
+  --wave-frequency 4 \
+  --wave-amplitude 0.2
+
+# Diagonal waves with animation
+pixel-stretch animate input.png output.mp4 \
+  --effect sine_wave \
+  --axis 45 \
+  --max-stretch 0.5 \
+  --frames 90
+```
+
+### Creative Applications
+
+1. **Precise Wave Effects**: When you need exact mathematical waves
+2. **Matching Post-Processing**: Use the same parameters in generation and post
+3. **Clean Distortions**: No randomness, pure sine waves
+4. **Performance**: More efficient than complex wave calculations
+
+### Combining with Post-Processing
+
+Since this effect shares the transform logic with the sine wave post-processor, you can create layered effects:
+
+```bash
+# Generate with sine wave, then post-process with perpendicular waves
+pixel-stretch animate input.png output.mp4 \
+  --effect sine_wave \
+  --axis vertical \
+  --post-process sine_wave \
+  --pp-sine-axis horizontal
+```
+
 ## Composite Effects
 
 Combine multiple effects for complex animations.
@@ -518,3 +604,210 @@ pixel-stretch animate fabric.png rotated_wave.mp4 \
    - 45° + Bias: Interesting diagonal melting
    - -45° + Pivot: Dynamic corner stretching
 3. **Experiment**: Non-standard angles can create unique, unexpected results
+
+## Post-Processing Effects
+
+Post-processing effects are applied after the main animation generation, allowing you to add additional distortions to existing videos or enhance generated animations.
+
+### Sine Wave Post-Processor
+
+Applies sinusoidal displacement to frames for ripple and wave effects.
+
+#### How It Works
+
+The sine wave post-processor displaces pixels based on a sine wave pattern. Unlike the wave distortion effect which works during generation, this operates on complete frames and can be applied to any video.
+
+#### Parameters
+
+- **axis** (string/float): Direction of the wave
+  - `vertical`: Up/down displacement
+  - `horizontal`: Left/right displacement
+  - `diagonal`: 45-degree angle
+  - Any angle in degrees (e.g., 30, -60, 90)
+
+- **frequency** (float): Number of wave cycles
+  - 1-2: Long, smooth waves
+  - 3-5: Medium frequency
+  - 6+: Tight ripples
+
+- **amplitude** (0-1): Displacement strength
+  - 0.01-0.03: Subtle distortion
+  - 0.05-0.1: Moderate waves
+  - 0.15+: Strong displacement
+
+- **phase** (float): Initial phase offset (radians)
+  - Shifts the wave pattern's starting position
+
+- **speed** (float): Animation speed
+  - Positive: Wave moves forward
+  - Negative: Wave moves backward
+  - 0: Static wave
+
+- **displacement_mode**: How pixels are displaced
+  - `translate`: Move pixels to new positions
+  - `scale`: Stretch/compress regions
+  - `both`: Combine translation and scaling
+
+- **edge_behavior**: How to handle image edges
+  - `wrap`: Pixels wrap around (seamless)
+  - `clamp`: Pixels stick to edges
+  - `fade`: Smooth fade at boundaries
+  - `mirror`: Reflect at edges
+
+- **amplitude_curve**: How amplitude changes over time
+  - `constant`: Same amplitude throughout
+  - `linear`: Linear increase
+  - `ease_in`: Start slow, accelerate
+  - `ease_out`: Start fast, decelerate
+  - `ease_in_out`: Smooth S-curve
+
+#### Command-Line Examples
+
+```bash
+# Basic vertical sine wave
+pixel-stretch process-video input.mp4 output.mp4 \
+  --post-process sine_wave \
+  --pp-sine-frequency 4.0 \
+  --pp-sine-amplitude 0.05
+
+# Horizontal moving wave
+pixel-stretch process-video input.mp4 output.mp4 \
+  --post-process sine_wave \
+  --pp-sine-axis horizontal \
+  --pp-sine-speed 0.8
+
+# Complex diagonal ripple
+pixel-stretch process-video input.mp4 output.mp4 \
+  --post-process sine_wave \
+  --pp-sine-axis 30 \
+  --pp-sine-frequency 6.0 \
+  --pp-sine-amplitude 0.03 \
+  --pp-sine-mode both \
+  --pp-sine-edge mirror
+
+# Apply to generated animation
+pixel-stretch animate input.png output.mp4 \
+  --effect flowing_melt \
+  --post-process sine_wave \
+  --pp-sine-frequency 3.0
+```
+
+#### Configuration Examples
+
+```yaml
+post_processing:
+  enabled: true
+  processors:
+    # Heat shimmer effect
+    - type: sine_wave
+      axis: vertical
+      frequency: 8.0
+      amplitude: 0.02
+      speed: 2.0
+      edge_behavior: fade
+      
+    # Water ripple
+    - type: sine_wave
+      axis: horizontal
+      frequency: 4.0
+      amplitude: 0.04
+      speed: 0.5
+      amplitude_curve: ease_in_out
+      start_amplitude: 0.0
+      end_amplitude: 0.08
+```
+
+#### Creative Applications
+
+1. **Heat Distortion**: High frequency, low amplitude vertical waves
+2. **Water Ripples**: Medium frequency horizontal waves with wrap edge behavior
+3. **Dream Sequences**: Slow diagonal waves with fade edges
+4. **Glitch Effects**: Combine multiple sine waves at different angles
+5. **Underwater Effects**: Dual axis waves with scale displacement
+
+### Upscale Post-Processor
+
+Scales up video resolution with configurable interpolation.
+
+#### Parameters
+
+- **scale_factor** (int): Integer scaling (2, 3, 4, etc.)
+- **method**: Interpolation method
+  - `nearest`: Preserves hard edges (pixel art)
+  - `bilinear`: Smooth scaling
+
+#### Examples
+
+```bash
+# 2x upscale with nearest neighbor
+pixel-stretch process-video input.mp4 output.mp4 \
+  --upscale 2
+
+# In configuration
+post_processing:
+  processors:
+    - type: upscale
+      scale_factor: 4
+      method: nearest
+```
+
+### Post-Processor Chaining
+
+Multiple post-processors can be combined in sequence:
+
+```bash
+# Apply horizontal wave, then vertical wave, then upscale
+pixel-stretch process-video input.mp4 output.mp4 \
+  --post-process sine_wave --pp-sine-axis horizontal \
+  --post-process sine_wave --pp-sine-axis vertical \
+  --upscale 2
+```
+
+#### Configuration example:
+```yaml
+post_processing:
+  enabled: true
+  processors:
+    # First: subtle horizontal wave
+    - type: sine_wave
+      axis: horizontal
+      frequency: 3.0
+      amplitude: 0.03
+      
+    # Second: stronger vertical wave
+    - type: sine_wave
+      axis: vertical
+      frequency: 5.0
+      amplitude: 0.05
+      speed: -0.5
+      
+    # Finally: upscale the result
+    - type: upscale
+      scale_factor: 2
+```
+
+### Best Practices for Post-Processing
+
+1. **Start Subtle**: Begin with low amplitude values (0.02-0.05)
+2. **Layer Effects**: Chain multiple subtle effects rather than one strong effect
+3. **Consider Content**: Match wave frequency to image features
+4. **Edge Behavior**: Use `wrap` for seamless loops, `fade` for natural boundaries
+5. **Performance**: Post-processing adds rendering time, especially with upscaling
+
+### Combining Generation and Post-Processing
+
+Post-processing works seamlessly with generated animations:
+
+```bash
+# Generate flowing melt animation with post-processing ripple
+pixel-stretch animate input.png output.mp4 \
+  --effect flowing_melt \
+  --max-stretch 0.4 \
+  --config configs/example_post_processing.yaml
+```
+
+This approach allows for:
+- Complex multi-stage effects
+- Non-destructive editing workflow
+- Reusable post-processing configurations
+- Batch processing of existing videos

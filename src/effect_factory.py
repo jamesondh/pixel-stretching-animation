@@ -6,7 +6,7 @@ from typing import Dict, Any, List, Optional
 from .distortion_effects import (
     DistortionEffect, BiasedStretchEffect, WaveDistortionEffect, 
     PivotStretchEffect, CompositeEffect, HorizontalStretchEffect, RotatedStretchEffect,
-    FlowingMeltEffect
+    FlowingMeltEffect, SineWaveDistortionEffect
 )
 from .config import EffectConfig
 
@@ -46,6 +46,16 @@ def create_effect_from_config(config: EffectConfig, axis: Optional[str] = None) 
             flow_speed=getattr(config, 'flow_speed', 0.3),
             flow_variation=getattr(config, 'flow_variation', 0.2),
             edge_behavior=getattr(config, 'edge_behavior', 'wrap'),
+            seed=config.seed
+        )
+    elif config.type == 'sine_wave':
+        base_effect = SineWaveDistortionEffect(
+            max_stretch=config.max_stretch,
+            frequency=getattr(config, 'frequency', 2.0),
+            amplitude=getattr(config, 'amplitude', 0.15),
+            phase=getattr(config, 'phase', 0.0),
+            speed=getattr(config, 'speed', 0.2),
+            axis=getattr(config, 'axis', 'vertical'),
             seed=config.seed
         )
     else:

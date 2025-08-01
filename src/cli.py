@@ -16,6 +16,8 @@ from .distortion_effects import (
 )
 from .animation import AnimationEngine, StandardFrameGenerator, CumulativeFrameGenerator, PingPongFrameGenerator
 from .effect_factory import create_effect_from_config
+from .post_processing_factory import PostProcessorFactory
+from .video_processor import VideoProcessor
 
 
 @click.group()
@@ -35,7 +37,7 @@ def cli():
 @click.option('--frames', '-f', default=60, help='Number of frames to generate')
 @click.option('--fps', default=30, help='Frames per second')
 @click.option('--max-stretch', '-s', default=0.5, help='Maximum stretch factor (0-1)')
-@click.option('--effect', type=click.Choice(['pivot', 'wave', 'bias', 'flowing_melt']), 
+@click.option('--effect', type=click.Choice(['pivot', 'wave', 'bias', 'flowing_melt', 'sine_wave']), 
               default='pivot', help='Effect type to use')
 @click.option('--pivot', type=click.Choice(['center', 'top', 'bottom']), 
               default='center', help='Pivot point for stretching')
@@ -59,10 +61,21 @@ def cli():
               help='Ending stretch value (defaults to max-stretch)')
 @click.option('--axis', type=str, default='vertical',
               help='Stretch axis: "vertical", "horizontal", or angle in degrees (e.g., "45")')
+@click.option('--post-process', '-P', type=str, multiple=True,
+              help='Apply post-processing effect (can be used multiple times)')
+@click.option('--pp-sine-axis', type=str, default='vertical',
+              help='Sine wave axis: vertical, horizontal, diagonal, or angle')
+@click.option('--pp-sine-frequency', type=float, default=3.0,
+              help='Sine wave frequency')
+@click.option('--pp-sine-amplitude', type=float, default=0.05,
+              help='Sine wave amplitude (0-1)')
+@click.option('--pp-sine-speed', type=float, default=0.5,
+              help='Sine wave animation speed')
 def animate(input_path, output_path, preset, config, frames, fps, max_stretch, 
            effect, pivot, interpolation, temporal_smoothing, seed, upscale, 
            cumulative, wave_amplitude, wave_frequency, stretch_bias,
-           stretch_curve, start_stretch, end_stretch, axis):
+           stretch_curve, start_stretch, end_stretch, axis, post_process,
+           pp_sine_axis, pp_sine_frequency, pp_sine_amplitude, pp_sine_speed):
     """Create a pixel-stretching animation from an input image."""
     
     input_path = Path(input_path)
@@ -121,12 +134,47 @@ def animate(input_path, output_path, preset, config, frames, fps, max_stretch,
         end_stretch=cfg.effect.end_stretch if cfg.effect.end_stretch is not None else cfg.effect.max_stretch
     )
     
+    # Create post-processor if specified
+    post_processor = None
+    if cfg.post_processing.enabled and cfg.post_processing.processors:
+        post_processor = PostProcessorFactory.create_chain(cfg.post_processing.processors)
+        click.echo(f"Applying {len(cfg.post_processing.processors)} post-processing effect(s)")
+    elif post_process:
+        # Build post-processor from CLI options
+        processors_config = []
+        for pp_type in post_process:
+            if pp_type == 'sine_wave':
+                proc_config = {
+                    'type': 'sine_wave',
+                    'axis': pp_sine_axis,
+                    'frequency': pp_sine_frequency,
+                    'amplitude': pp_sine_amplitude,
+                    'speed': pp_sine_speed
+                }
+                processors_config.append(proc_config)
+            elif pp_type == 'upscale' and upscale > 1:
+                # Move upscaling to post-processing
+                proc_config = {
+                    'type': 'upscale',
+                    'scale_factor': upscale
+                }
+                processors_config.append(proc_config)
+                # Disable upscaling in stretcher
+                stretcher.upscale = 1
+        
+        if processors_config:
+            post_processor = PostProcessorFactory.create_chain(processors_config)
+            click.echo(f"Applying {len(processors_config)} post-processing effect(s)")
+    
     # Generate animation
     stretcher.create_animation(
         input_path=input_path,
         output_path=output_path,
         frames=cfg.animation.frames,
-        fps=cfg.animation.fps
+        fps=cfg.animation.fps,
+        post_processor=post_processor,
+        codec=cfg.output.codec,
+        quality=cfg.output.quality
     )
     
     click.echo(f"Animation saved to {output_path}")
@@ -169,6 +217,97 @@ def effects():
     click.echo("    --axis horizontal        # Left-right stretching")
     click.echo("    --axis 45               # Diagonal stretching at 45°")
     click.echo("    --axis -30              # Diagonal stretching at -30°")
+
+
+@cli.command()
+@click.argument('input_video', type=click.Path(exists=True))
+@click.argument('output_video', type=click.Path())
+@click.option('--config', '-c', type=click.Path(exists=True),
+              help='Load post-processing configuration from file')
+@click.option('--post-process', '-P', type=str, multiple=True,
+              help='Apply post-processing effect (can be used multiple times)')
+@click.option('--pp-sine-axis', type=str, default='vertical',
+              help='Sine wave axis: vertical, horizontal, diagonal, or angle')
+@click.option('--pp-sine-frequency', type=float, default=3.0,
+              help='Sine wave frequency')
+@click.option('--pp-sine-amplitude', type=float, default=0.05,
+              help='Sine wave amplitude (0-1)')
+@click.option('--pp-sine-speed', type=float, default=0.5,
+              help='Sine wave animation speed')
+@click.option('--pp-sine-mode', type=click.Choice(['translate', 'scale', 'both']),
+              default='translate', help='Sine wave displacement mode')
+@click.option('--pp-sine-edge', type=click.Choice(['wrap', 'clamp', 'fade', 'mirror']),
+              default='wrap', help='Edge behavior for sine wave')
+@click.option('--upscale', '-u', type=int, default=1,
+              help='Upscale factor for video')
+@click.option('--fps', type=int, default=None,
+              help='Output FPS (defaults to input FPS)')
+@click.option('--codec', type=str, default='libx264',
+              help='Video codec to use')
+@click.option('--quality', type=int, default=None,
+              help='Video quality (codec-specific)')
+def process_video(input_video, output_video, config, post_process,
+                 pp_sine_axis, pp_sine_frequency, pp_sine_amplitude,
+                 pp_sine_speed, pp_sine_mode, pp_sine_edge, upscale,
+                 fps, codec, quality):
+    """Apply post-processing effects to an existing video."""
+    
+    input_path = Path(input_video)
+    output_path = Path(output_video)
+    
+    # Build post-processor configuration
+    processors_config = []
+    
+    if config:
+        # Load from config file
+        cfg = PixelStretchConfig.from_file(config)
+        if cfg.post_processing.enabled and cfg.post_processing.processors:
+            processors_config = cfg.post_processing.processors
+            click.echo(f"Loaded {len(processors_config)} post-processor(s) from config")
+    
+    # Add CLI-specified processors
+    for pp_type in post_process:
+        if pp_type == 'sine_wave':
+            proc_config = {
+                'type': 'sine_wave',
+                'axis': pp_sine_axis,
+                'frequency': pp_sine_frequency,
+                'amplitude': pp_sine_amplitude,
+                'speed': pp_sine_speed,
+                'displacement_mode': pp_sine_mode,
+                'edge_behavior': pp_sine_edge
+            }
+            processors_config.append(proc_config)
+            click.echo("Added sine wave post-processor")
+    
+    # Add upscaling if specified
+    if upscale > 1:
+        proc_config = {
+            'type': 'upscale',
+            'scale_factor': upscale
+        }
+        processors_config.append(proc_config)
+        click.echo(f"Added {upscale}x upscaling")
+    
+    if not processors_config:
+        click.echo("Error: No post-processors specified", err=True)
+        return
+    
+    # Create post-processor
+    post_processor = PostProcessorFactory.create_chain(processors_config)
+    
+    # Process video
+    processor = VideoProcessor(post_processor)
+    click.echo(f"Processing video: {input_path} -> {output_path}")
+    
+    processor.process_video(
+        input_path=input_path,
+        output_path=output_path,
+        fps=fps,
+        codec=codec,
+        quality=quality,
+        show_progress=True
+    )
 
 
 @cli.command()
@@ -223,7 +362,7 @@ def create_config(output_path, preset, format):
 @cli.command()
 @click.argument('input_path', type=click.Path(exists=True))
 @click.option('--size', '-s', default=64, help='Preview size (width and height)')
-@click.option('--effect', type=click.Choice(['pivot', 'wave', 'bias', 'flowing_melt']), 
+@click.option('--effect', type=click.Choice(['pivot', 'wave', 'bias', 'flowing_melt', 'sine_wave']), 
               default='pivot', help='Effect type to preview')
 @click.option('--max-stretch', default=0.5, help='Maximum stretch factor')
 def preview(input_path, size, effect, max_stretch):
