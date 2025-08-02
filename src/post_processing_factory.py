@@ -49,7 +49,11 @@ class PostProcessorFactory:
                 start_amplitude=config.get('start_amplitude'),
                 end_amplitude=config.get('end_amplitude'),
                 interpolation=config.get('interpolation', 'bilinear'),
-                preserve_palette=config.get('preserve_palette', False)
+                preserve_palette=config.get('preserve_palette', False),
+                amplitude_gradient=config.get('amplitude_gradient', 'none'),
+                gradient_curve=config.get('gradient_curve', 'linear'),
+                gradient_start=config.get('gradient_start', 0.0),
+                gradient_end=config.get('gradient_end', 1.0)
             )
         else:
             raise ValueError(f"Unknown post-processor type: {processor_type}")

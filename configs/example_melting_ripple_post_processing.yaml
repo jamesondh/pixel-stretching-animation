@@ -47,6 +47,10 @@ post_processing:
       amplitude_curve: ease_in_out
       start_amplitude: 0.0
       end_amplitude: 0.01
+      amplitude_gradient: vertical # Key feature!
+      gradient_curve: linear # or ease_in, ease_out, ease_in_out
+      gradient_start: 0.0 # No effect at top
+      gradient_end: 1.0 # Full effect at bottom
       interpolation: nearest # Use nearest for sharp pixels, bilinear for smooth
       preserve_palette: true # Preserve original colors (no blur)
 

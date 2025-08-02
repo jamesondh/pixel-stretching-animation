@@ -148,7 +148,11 @@ class SineWavePostProcessor(PostProcessor):
                  start_amplitude: Optional[float] = None,
                  end_amplitude: Optional[float] = None,
                  interpolation: Literal['nearest', 'bilinear'] = 'bilinear',
-                 preserve_palette: bool = False):
+                 preserve_palette: bool = False,
+                 amplitude_gradient: Literal['none', 'vertical', 'vertical_inverse'] = 'none',
+                 gradient_curve: Literal['linear', 'ease_in', 'ease_out', 'ease_in_out'] = 'linear',
+                 gradient_start: float = 0.0,
+                 gradient_end: float = 1.0):
         """
         Initialize sine wave post-processor.
         
@@ -166,6 +170,10 @@ class SineWavePostProcessor(PostProcessor):
             end_amplitude: Ending amplitude (defaults to amplitude)
             interpolation: Interpolation method ('nearest' for sharp pixels, 'bilinear' for smooth)
             preserve_palette: When True with nearest interpolation, preserves exact original colors
+            amplitude_gradient: Type of spatial amplitude modulation ('none', 'vertical', 'vertical_inverse')
+            gradient_curve: How the gradient transitions ('linear', 'ease_in', 'ease_out', 'ease_in_out')
+            gradient_start: Start position of gradient (0.0 = top, 1.0 = bottom)
+            gradient_end: End position of gradient (0.0 = top, 1.0 = bottom)
         """
         # Handle axis/angle specification
         if angle is not None:
@@ -175,13 +183,17 @@ class SineWavePostProcessor(PostProcessor):
         else:
             axis_value = axis
             
-        # Initialize shared transform
+        # Initialize shared transform with gradient parameters
         self.transform = SineWaveTransform(
             frequency=frequency,
             amplitude=amplitude,
             phase=phase,
             speed=speed,
-            axis=axis_value
+            axis=axis_value,
+            amplitude_gradient=amplitude_gradient,
+            gradient_curve=gradient_curve,
+            gradient_start=gradient_start,
+            gradient_end=gradient_end
         )
         
         self.displacement_mode = displacement_mode

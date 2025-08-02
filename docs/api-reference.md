@@ -406,7 +406,11 @@ processor = SineWavePostProcessor(
     start_amplitude=None,
     end_amplitude=None,
     interpolation='bilinear',
-    preserve_palette=False
+    preserve_palette=False,
+    amplitude_gradient='none',
+    gradient_curve='linear',
+    gradient_start=0.0,
+    gradient_end=1.0
 )
 ```
 
@@ -424,6 +428,10 @@ processor = SineWavePostProcessor(
 - **end_amplitude** (float, optional): Ending amplitude for animation
 - **interpolation** (str): Interpolation method ('nearest' for sharp pixels, 'bilinear' for smooth)
 - **preserve_palette** (bool): When True with nearest interpolation, preserves exact original colors
+- **amplitude_gradient** (str): Spatial amplitude modulation ('none', 'vertical', 'vertical_inverse')
+- **gradient_curve** (str): How the gradient transitions ('linear', 'ease_in', 'ease_out', 'ease_in_out')
+- **gradient_start** (float, 0-1): Start position of gradient (0.0 = top, 1.0 = bottom)
+- **gradient_end** (float, 0-1): End position of gradient (0.0 = top, 1.0 = bottom)
 
 ### UpscalePostProcessor
 

@@ -1,0 +1,64 @@
+# Sine wave with vertical gradient - stronger at bottom, none at top
+# This example shows how to make waves that don't affect the top of the image
+
+effect:
+  type: composite
+  max_stretch: 0.2
+  stretch_curve: linear
+  start_stretch: 0.0
+  end_stretch: 0.2
+  effects:
+    # Melting effect (bias) - progressively stronger
+    - type: bias
+      stretch_bias: 0.15
+      stretch_curve: linear
+    # Ripple effect (wave) - constant strength
+    - type: wave
+      wave_amplitude: 0.1
+      wave_frequency: 2.0
+      wave_phase_speed: 0.2
+      stretch_curve: constant
+  weights: [0.8, 0.1]
+  seed: 42
+
+animation:
+  frames: 200
+  fps: 30
+  interpolation: bilinear
+  temporal_smoothing: 0.4
+  cumulative: true
+  frame_generator: cumulative
+
+# Post-processing with vertical gradient
+post_processing:
+  enabled: true
+  processors:
+    # Sine wave with vertical gradient
+    - type: sine_wave
+      axis: horizontal
+      frequency: 4.0
+      amplitude: 0.05  # Maximum amplitude (at bottom)
+      phase: 0.0
+      speed: 0.3
+      displacement_mode: translate
+      edge_behavior: wrap
+      # Temporal amplitude curve (over time)
+      amplitude_curve: ease_in_out
+      start_amplitude: 0.0   # Start with no wave
+      end_amplitude: 0.05    # End with full amplitude
+      # Spatial amplitude gradient - the key feature!
+      amplitude_gradient: vertical  # Amplitude increases from top to bottom
+      gradient_curve: ease_in      # Smooth transition
+      gradient_start: 0.0          # No effect at the very top (0%)
+      gradient_end: 0.6            # Full effect starts at 60% down
+      interpolation: nearest
+      preserve_palette: true
+
+    # Upscale the result
+    - type: upscale
+      scale_factor: 4
+      method: nearest
+
+output:
+  format: mp4
+  codec: libx264

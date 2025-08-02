@@ -660,6 +660,25 @@ The sine wave post-processor displaces pixels based on a sine wave pattern. Unli
 
 - **preserve_palette** (boolean): Color preservation mode
   - `true`: With nearest interpolation, preserves exact original colors
+
+- **amplitude_gradient** (string): Spatial amplitude modulation
+  - `none`: Uniform amplitude across the image (default)
+  - `vertical`: Amplitude increases from top to bottom
+  - `vertical_inverse`: Amplitude increases from bottom to top
+
+- **gradient_curve** (string): How the gradient transitions
+  - `linear`: Straight line transition
+  - `ease_in`: Slow start, fast end
+  - `ease_out`: Fast start, slow end
+  - `ease_in_out`: Smooth at both ends
+
+- **gradient_start** (0-1): Where gradient begins
+  - 0.0: Top of image
+  - 0.5: Middle of image
+  - 1.0: Bottom of image
+
+- **gradient_end** (0-1): Where gradient reaches full strength
+  - Controls the range of the gradient effect
   - `false`: Standard interpolation (default)
 
 - **amplitude_curve**: How amplitude changes over time
@@ -740,6 +759,34 @@ post_processing:
       edge_behavior: wrap
 ```
 
+#### Example: Vertical Gradient Effects
+```yaml
+# Wave effect stronger at bottom, none at top
+post_processing:
+  enabled: true
+  processors:
+    - type: sine_wave
+      axis: horizontal
+      frequency: 4.0
+      amplitude: 0.1           # Maximum amplitude
+      amplitude_gradient: vertical
+      gradient_curve: linear
+      gradient_start: 0.0      # No effect at top
+      gradient_end: 1.0        # Full effect at bottom
+      
+# Focused wave effect in middle third
+post_processing:
+  processors:
+    - type: sine_wave
+      axis: horizontal
+      frequency: 5.0
+      amplitude: 0.08
+      amplitude_gradient: vertical
+      gradient_curve: ease_in_out
+      gradient_start: 0.3      # Start at 30% from top
+      gradient_end: 0.7        # End at 70% from top
+```
+
 #### Creative Applications
 
 1. **Heat Distortion**: High frequency, low amplitude vertical waves
@@ -747,6 +794,8 @@ post_processing:
 3. **Dream Sequences**: Slow diagonal waves with fade edges
 4. **Glitch Effects**: Combine multiple sine waves at different angles
 5. **Underwater Effects**: Dual axis waves with scale displacement
+6. **Ground Heat Waves**: Use vertical gradient to simulate heat rising from ground
+7. **Partial Screen Effects**: Use gradient to limit effects to specific regions
 
 ### Upscale Post-Processor
 
